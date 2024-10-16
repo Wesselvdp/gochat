@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@import "theme";
+
+p {
+  letter-spacing: 0.5px;
+}
+
+body {
+  color: var(--text-color);
+}
+
+.input {
+  background: rgba(0,0,0,0.5);
+  border-radius: 1em;
+  padding: 0.5em 1em;
+}
+
+.chatBubble {
+  //background: rgba(0,0,0,0.5);
+  //border-radius: 1em;
+  padding: 0.25em 1em;
+  margin-bottom: 1em;
+}
