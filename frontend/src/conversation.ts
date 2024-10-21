@@ -1,6 +1,7 @@
 import db, {Message, SavedConversation} from "./db";
 import {ChatCompletionMessageParam} from "openai/src/resources/chat/completions";
 import axios from "axios";
+import {nanoid} from "nanoid";
 
 class Conversation {
     id
@@ -25,6 +26,7 @@ class Conversation {
        const messages = await db.messages.getByConversation(this.id);
        const rootEl = document.querySelector('#messageRoot') || document.querySelector('#inner');
        console.log({messages, rootEl})
+
        if (!rootEl) {
            console.log('no root found for messages')
            return;
@@ -65,7 +67,7 @@ class Conversation {
         // Get past messages
         const messages = await (window as any).goChat.conversation.getMessages()
         const openMessages = messages.map((m: Message) => ({role: m.role, content: m.content}))
-
+console.log({openMessages})
         const res = await axios.post(`/send-message`, {messages: openMessages})
         if(res.status === 200) {
             const savedAssistantMessage = await db.messages.create(this.id, {role: 'assistant', content: res.data.content})
@@ -93,6 +95,13 @@ class Conversation {
 
 }
 
+export async function createConversation(content: string) {
+    const id  = nanoid()
+    await db.conversation.create(id)
+    await db.messages.create(id, {role: 'user', content})
+    window.location.href = window.location.origin + `/c/${id}`
+}
+
 export async function initConversation(id: string, isNew: boolean) {
     try {
     const savedConversation = isNew ?  await db.conversation.create(id) : await db.conversation.get(id)
@@ -106,8 +115,20 @@ export async function initConversation(id: string, isNew: boolean) {
 
     if(!savedConversation) throw Error("failed saving conversation")
     const messages = await db.messages.getByConversation(id);
-    console.log({1: messages})
+
+
+
     const conversation = new Conversation(savedConversation, messages);
+
+    const lastMessage = messages.slice(-1, messages.length)[0]
+    if(lastMessage?.role === "user") {
+        const res = await axios.post(`/send-message`, {messages: messages.map(m => ({role: m.role, content: m.content}))})
+        if(res.status === 200) {
+            const savedAssistantMessage = await db.messages.create(conversation.id, {role: 'assistant', content: res.data.content})
+            await conversation.addMessageToDOM(savedAssistantMessage)
+        }
+    }
+
     (window as any).goChat.conversation = conversation
 
    await conversation.drawMessages()

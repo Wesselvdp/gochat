@@ -1,5 +1,5 @@
 import "./styles.scss";
-import {initConversation} from "./conversation";
+import {initConversation, createConversation} from "./conversation";
 import './components'
 import db from "./db";
 import './htmx-openai'
@@ -22,7 +22,7 @@ const recentConversations = {
         })
     },
 };
-(window as any).goChat = { initConversation, recentConversations };
+(window as any).goChat = { initConversation, recentConversations, createConversation };
 
 (async () => {
    recentConversations.init()

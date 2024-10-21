@@ -18,6 +18,51 @@ class UserMessage extends HTMLElement {
     }
 }
 
+class TextArea extends HTMLElement {
+    constructor() {
+        super()
+
+        this.innerHTML = `
+            <form
+            class="max-w-3xl mx-auto w-full"
+
+            >
+               <textarea class="input w-full" id="growingTextarea" placeholder="Type your message..."></textarea>
+           </form>
+        `;
+
+        const textarea: HTMLTextAreaElement | null = this.querySelector('#growingTextarea');
+        const form: HTMLFormElement | null = this.querySelector('form');
+        if(!textarea) return;
+
+        textarea?.addEventListener('input', autoResize);
+        textarea?.addEventListener('keydown', handleKeyDown);
+
+        function autoResize() {
+            if(!textarea) return;
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        }
+
+        function handleKeyDown(e: any) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                console.log('submit');
+                (window as any).goChat.createConversation(textarea?.value);
+            }
+        }
+
+        // function submitText() {
+        //     const text = textarea.value.trim();
+        //     if (text) {
+        //         output.textContent = 'Submitted: ' + text;
+        //         textarea.value = '';
+        //         autoResize.call(textarea);
+        //     }
+        // }
+    }
+}
+
 class RecentConversation extends HTMLElement {
     connectedCallback() {
         const id = this.getAttribute('id') || '';
@@ -43,12 +88,7 @@ class RecentConversation extends HTMLElement {
            db.conversation.delete(id);
             (window as any).goChat.recentConversations.init()
         });
-        // Add the click event listener
-        // this.querySelector('div')?.addEventListener('click', () => {
-        //
-        //     (window as any).goChat.initConversation(id, false);
-        //     // window.location.href = window.location.origin + `/c/${id}`;
-        // });
+
 
         // Ensure HTMX processes this new HTML after it has been added to the DOM
         (window as any).htmx.process(this);
@@ -83,5 +123,6 @@ class RecentConversation extends HTMLElement {
 
 
 customElements.define('user-message', UserMessage)
+customElements.define('text-area', TextArea)
 customElements.define('assistant-message', AssistantMessage)
 customElements.define('recent-conversation', RecentConversation)
