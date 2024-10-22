@@ -20,7 +20,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.gochat.entrypoints=websecure"
       - "traefik.http.routers.gochat.tls.certResolver=letsencrypt"
-      - "traefik.http.routers.gochat.rule=Host(`app.yourdomain.com`)"
+      - "traefik.http.routers.gochat.rule=Host(`app.torgon.io`)"
       - "traefik.http.services.gochat.loadbalancer.server.port=3000"
 
 networks:
