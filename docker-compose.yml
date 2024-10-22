@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   app:
     build: .
@@ -21,7 +20,7 @@ services:
       - "traefik.http.routers.gochat.entrypoints=websecure"
       - "traefik.http.routers.gochat.tls.certResolver=letsencrypt"
       - "traefik.http.routers.gochat.rule=Host(`app.torgon.io`)"
-      - "traefik.http.services.gochat.loadbalancer.server.port=8080"
+      - "traefik.http.services.gochat.loadbalancer.server.port=3000"
 
 networks:
   dokploy-network:
