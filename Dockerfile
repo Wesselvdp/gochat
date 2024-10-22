@@ -1,4 +1,13 @@
-# Build stage
+# Frontend build stage
+FROM node:20-alpine AS frontend-builder
+WORKDIR /app
+COPY frontend/package*.json ./
+RUN npm install
+COPY frontend/ ./
+RUN npm run build
+
+# Build
+ stage
 FROM golang:1.22-alpine AS builder
 
 WORKDIR /app
@@ -9,7 +18,6 @@ RUN go mod download
 
 # Copy the entire project
 COPY . .
-
 # Build the application
 RUN CGO_ENABLED=0 GOOS=linux go build -o /app/server ./cmd/main.go
 
@@ -21,7 +29,8 @@ RUN apk --no-cache add ca-certificates
 
 # Copy binary from builder
 COPY --from=builder /app/server /server
-
+# Copy the frontend dist files (only once)
+COPY --from=frontend-builder /app/frontend/dist /frontend/dist
 # Expose port
 EXPOSE 8080
 
