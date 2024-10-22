@@ -1,7 +1,11 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-@import "theme";
+
+:root {
+  --main-bg-color: #253036;
+  --text-color: #eee
+}
 
 p {
   letter-spacing: 0.5px;
