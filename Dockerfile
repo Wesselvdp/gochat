@@ -29,7 +29,7 @@ RUN apk --no-cache add ca-certificates
 # Copy binary from builder
 COPY --from=builder /app/server /server
 # Copy the frontend dist files (only once)
-COPY --from=frontend-builder /app/frontend/dist /frontend/dist
+COPY --from=frontend-builder /app/dist /frontend/dist
 # Expose port
 EXPOSE 8080
 
