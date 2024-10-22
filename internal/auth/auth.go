@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 )
 
@@ -16,10 +17,16 @@ import (
 const (
 	clientID     = "6cff7fb3-321c-4845-b85a-4016f8ed52b9"
 	clientSecret = "Daz8Q~TCX5hgRwr-dDf0muvFHVtXO36Y8VQl0bzf"
-	redirectURI  = "http://localhost:8080/oauth/redirect/azure"
 	tenantID     = "5159c2f7-a08e-49de-badb-221b53d4c4ed"
 	scope        = "User.Read"
 )
+
+var redirectURI = func() string {
+	if os.Getenv("ENV") == "production" {
+		return "https://app.torgon.io/oauth/redirect/azure"
+	}
+	return "http://localhost:8080/oauth/redirect/azure"
+}()
 
 func SetTokenCookie(c *gin.Context, token string) {
 	c.SetCookie(
