@@ -28,14 +28,21 @@ var redirectURI = func() string {
 	return "http://localhost:8080/oauth/redirect/azure"
 }()
 
+var domain = func() string {
+	if os.Getenv("ENV") == "production" {
+		return "app.torgon.io"
+	}
+	return "localhost"
+}()
+
 func SetTokenCookie(c *gin.Context, token string) {
 	c.SetCookie(
 		"token",
 		token,
 		3600*24, // 1 day
 		"/",
-		"localhost", // Change this to your domain
-		false,       // Set to true if using HTTPS
+		domain, // Change this to your domain
+		false,  // Set to true if using HTTPS
 		true,
 	)
 }
