@@ -17,10 +17,10 @@ services:
       - dokploy-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.gochat.entrypoints=websecure"
-      - "traefik.http.routers.gochat.tls.certResolver=letsencrypt"
-      - "traefik.http.routers.gochat.rule=Host(`app.torgon.io`)"
-      - "traefik.http.services.gochat.loadbalancer.server.port=3000"
+      - "traefik.http.routers.gochat2.entrypoints=websecure"
+      - "traefik.http.routers.gochat2.tls.certResolver=letsencrypt"
+      - "traefik.http.routers.gochat2.rule=Host(`app.torgon.io`)"
+      - "traefik.http.services.gochat2.loadbalancer.server.port=3000"
 
 networks:
   dokploy-network:
