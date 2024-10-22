@@ -16,13 +16,15 @@ func AddRoutes(r *gin.Engine) {
 	r.GET("/login/google", auth.OauthGoogleLogin())
 	r.GET("/oauth/redirect/azure", handlers.OAuthRedirectAzure(r))
 	r.GET("/oauth/redirect/google", handlers.OAuthRedirectGoogle(r))
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "ok"})
+	})
 
 	protected := r.Group("")
 	protected.Use(auth.JWTMiddleware())
 	{
 		protected.GET("", handlers.IndexPageHandler())
 		protected.GET("c/:id", handlers.ChatPageHandler())
-		protected.GET("new", handlers.NewChatHandler())
 		protected.GET("component/:componentName", handlers.ComponentHandler())
 		protected.POST("send-message", handlers.SendMessageHandler())
 

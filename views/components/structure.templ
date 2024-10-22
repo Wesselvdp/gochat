@@ -45,17 +45,17 @@ templ SideBar() {
 	<div class="bg-gray-900 p-4 flex flex-col rounded-r-2xl w-[260px]">
 		<div class="flex mb-4 items center gap-8 justify-between">
 			<button>
-                @Avatar()
-            </button>
-			<button hx-get="/new" hx-target="#inner" class="flex mb-2 items-center gap-8 justify-between">
-				<span>New chat</span>
+				@Avatar()
+			</button>
+			<button hx-get="/" hx-push-url="/" hx-target="#inner" class="flex mb-2 items-center gap-8 justify-between">
+				<span>Nieuw gesprek</span>
 				<span class="material-symbols-outlined">
 					edit
 				</span>
 			</button>
 		</div>
 		<div>
-			<div class="text-slate-500 mb-2">Previously</div>
+			<div class="text-slate-500 mb-2">Vorige gesprekken</div>
 			<div id="recentConversationsRoot"></div>
 		</div>
 		<div class="mt-auto">
@@ -63,7 +63,7 @@ templ SideBar() {
 				<span class="material-symbols-outlined">
 					logout
 				</span>
-				<span class="group-hover:opacity-100 opacity-0 transition-all">logout</span>
+				<span class="group-hover:opacity-100 opacity-0 transition-all">uitloggen</span>
 			</button>
 		</div>
 	</div>

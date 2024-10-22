@@ -2,15 +2,12 @@ package handlers
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/a-h/templ"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	openai "github.com/sashabaranov/go-openai"
 	views "gochat/views"
 	"gochat/views/components"
-	"log"
 	"net/http"
 	"time"
 )
@@ -20,7 +17,7 @@ type Config struct {
 }
 
 type UserRequestData struct {
-	messages []openai.ChatCompletionMessage
+	Messages []openai.ChatCompletionMessage `json:"messages"`
 }
 
 const appTimeout = time.Second * 10
@@ -57,7 +54,9 @@ func ComponentHandler() gin.HandlerFunc {
 		render(ctx, http.StatusOK, components.Component(componentName))
 	}
 }
+
 func SendMessageHandler() gin.HandlerFunc {
+
 	return func(ctx *gin.Context) {
 		_, cancel := context.WithTimeout(context.Background(), appTimeout)
 		defer cancel()
@@ -70,11 +69,10 @@ func SendMessageHandler() gin.HandlerFunc {
 
 		response := gin.H{
 			"content": "success",
-			"data":    data.messages,
+			"data":    data.Messages,
 		}
 
 		ctx.JSON(http.StatusOK, response)
-
 	}
 }
 
@@ -94,32 +92,5 @@ func ChatPageHandler() gin.HandlerFunc {
 		} else {
 			render(ctx, http.StatusOK, views.ChatPage(id, isNew))
 		}
-	}
-}
-
-func NewChatHandler() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		_, cancel := context.WithTimeout(context.Background(), appTimeout)
-		defer cancel()
-
-		id := uuid.New()
-		// Set the HX-Push-Url header
-		responseHeader := map[string]string{
-			"path":   "/c/" + id.String() + "?create=true",
-			"target": "#inner",
-		}
-
-		// Convert the map to a JSON string
-		jsonResponseHeader, err := json.Marshal(responseHeader)
-		if err != nil {
-			// Handle error, e.g., log it or return an appropriate response
-			log.Printf("Error marshalling JSON: %v", err)
-			ctx.String(500, "Internal Server Error")
-			return
-		}
-
-		// Set the "HX-Location" header with the JSON string
-		ctx.Header("HX-Location", string(jsonResponseHeader))
-		return
 	}
 }

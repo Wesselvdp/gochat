@@ -192,7 +192,7 @@ func SideBar() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</button> <button hx-get=\"/new\" hx-target=\"#inner\" class=\"flex mb-2 items-center gap-8 justify-between\"><span>New chat</span> <span class=\"material-symbols-outlined\">edit</span></button></div><div><div class=\"text-slate-500 mb-2\">Previously</div><div id=\"recentConversationsRoot\"></div></div><div class=\"mt-auto\"><button class=\"group flex items-center gap-4 opacity-70 hover:opacity-100 transition-all\"><span class=\"material-symbols-outlined\">logout</span> <span class=\"group-hover:opacity-100 opacity-0 transition-all\">logout</span></button></div></div>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</button> <button hx-get=\"/\" hx-push-url=\"/\" hx-target=\"#inner\" class=\"flex mb-2 items-center gap-8 justify-between\"><span>Nieuw gesprek</span> <span class=\"material-symbols-outlined\">edit</span></button></div><div><div class=\"text-slate-500 mb-2\">Vorige gesprekken</div><div id=\"recentConversationsRoot\"></div></div><div class=\"mt-auto\"><button class=\"group flex items-center gap-4 opacity-70 hover:opacity-100 transition-all\"><span class=\"material-symbols-outlined\">logout</span> <span class=\"group-hover:opacity-100 opacity-0 transition-all\">uitloggen</span></button></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

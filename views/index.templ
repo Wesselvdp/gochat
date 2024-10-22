@@ -12,38 +12,23 @@ templ Index() {
 				@components.SideBar()
 				// Inner
 				<div id="inner" class="h-screen max-h-[100dvh] md:max-w-[calc(100%-260px)] w-full max-w-full flex flex-col pt-2">
-					// @Chat("", false)
-					<div class="flex-1 p-4 flex items-center justify-center w-full">
-						<div class="w-full flex justify-center flex-col items-center">
-							<div class="mb-2">
-								<h1 class="h1 text-4xl">Welkom,</h1>
-								<h2 class="h2 block text-2xl">Veilig, versleutelde AI. Het kan.</h2>
-							</div>
-							<form
-								class="max-w-3xl mx-auto w-full"
-								onsubmit="event.preventDefault(); window.goChat.conversation.handleUserInput(this);"
-							>
-								<input
-									class="input w-full"
-									autocomplete="off"
-									id="user-input"
-									type="text"
-									name="message"
-									placeholder="Type your message..."
-								/>
-							</form>
-							// <button hx-get="/new" hx-target="#inner" class="flex mb-2 items-center gap-8 justify-between bg-slate-900 px-4 py-1 rounded-lg">
-							// 	<span>New chat</span>
-							// 	<span class="material-symbols-outlined">
-							// 		edit
-							// 	</span>
-							// </button>
-						</div>
-					</div>
+					@NewChat()
 				</div>
 			</div>
 		}
 	</html>
+}
+
+templ NewChat() {
+	<div class="flex-1 p-4 flex items-center justify-center w-full">
+		<div class="w-full flex justify-center flex-col items-center">
+			<div class="mb-4 text-center">
+				<h1 class="h1 text-4xl">Welkom,</h1>
+				<h2 class="h2 block text-2xl">Veilig, versleutelde AI. Het kan.</h2>
+			</div>
+			<text-area class="w-full"></text-area>
+		</div>
+	</div>
 }
 
 templ LoginPage() {
