@@ -14,3 +14,15 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    networks:
+      - dokploy-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.gochat.entrypoints=websecure"
+      - "traefik.http.routers.gochat.tls.certResolver=letsencrypt"
+      - "traefik.http.routers.gochat.rule=Host(`app.yourdomain.com`)"
+      - "traefik.http.services.gochat.loadbalancer.server.port=3000"
+
+networks:
+  dokploy-network:
+    external: true
