@@ -19,5 +19,12 @@ export default defineConfig({
       },
     },
     emptyOutDir: true,
+    css: {
+      preprocessorOptions: {
+        scss: {
+          // If you have any SCSS options
+        }
+      }
+    }
   },
 });
