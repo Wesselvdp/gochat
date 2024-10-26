@@ -1,7 +1,7 @@
 import db, {Message, SavedConversation} from "./db";
-import {ChatCompletionMessageParam} from "openai/src/resources/chat/completions";
 import axios from "axios";
-import {nanoid} from "nanoid";
+import { nanoid } from "nanoid";
+import { marked } from "marked";
 
 class Conversation {
     id
@@ -34,7 +34,6 @@ class Conversation {
 
        rootEl.innerHTML = ''
 
-        console.log({messages})
         // const messages = ['first', 'second', 'third']
        messages.map(m => this.addMessageToDOM(m))
     }
@@ -48,16 +47,12 @@ class Conversation {
         if (message.role === 'user') div.innerHTML = `<user-message>${message.content}</user-message>`;
         if (message.role === 'assistant') div.innerHTML = `<assistant-message>${message.content}</assistant-message>`;
 
-        // el.innerText = m
         rootEl?.appendChild(div)
     }
 
-    async handleUserInput(form: HTMLFormElement) {
+    async handleUserInput(content: string) {
         console.log("handling")
-        //  Get value
-        const input = form.querySelector<HTMLInputElement>('#user-input');
-        if(!input) return
-        const content = input.value;
+
         if (content.trim() === '') return; // Don't send empty content
 
         // Save message to db
@@ -67,22 +62,19 @@ class Conversation {
         // Get past messages
         const messages = await (window as any).goChat.conversation.getMessages()
         const openMessages = messages.map((m: Message) => ({role: m.role, content: m.content}))
-console.log({openMessages})
+
         const res = await axios.post(`/send-message`, {messages: openMessages})
         if(res.status === 200) {
             const savedAssistantMessage = await db.messages.create(this.id, {role: 'assistant', content: res.data.content})
             await this.addMessageToDOM(savedAssistantMessage)
         }
 
-        // Clear the input field
-        input.value = '';
-
         // If message is first, make it the title
         if(messages.length === 1) db.conversation.update({...this.data, title: content})
     }
 
     async handleServerResponse(r: any) {
-        const {content} = JSON.parse(r)
+        const { content } = JSON.parse(r)
         const savedMessage = await db.messages.create(this.id, {role: 'assistant', content})
         await this.addMessageToDOM(savedMessage)
         //  Todo: handle exceptions
@@ -97,14 +89,14 @@ console.log({openMessages})
 
 export async function createConversation(content: string) {
     const id  = nanoid()
-    await db.conversation.create(id)
+    await db.conversation.create(id, content)
     await db.messages.create(id, {role: 'user', content})
     window.location.href = window.location.origin + `/c/${id}`
 }
 
-export async function initConversation(id: string, isNew: boolean) {
+export async function initConversation(id: string) {
     try {
-    const savedConversation = isNew ?  await db.conversation.create(id) : await db.conversation.get(id)
+    const savedConversation = await db.conversation.get(id)
     window.history.replaceState(null, '',window.location.origin + `/c/${id}`);
 
 

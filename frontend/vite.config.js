@@ -22,9 +22,19 @@ export default defineConfig({
     css: {
       preprocessorOptions: {
         scss: {
+          sourcemap: true,
           // If you have any SCSS options
         }
       }
     }
+  },
+  resolve: {
+    alias: [
+      {
+        // this is required for the SCSS modules
+        find: /^~(.*)$/,
+        replacement: '$1',
+      },
+    ],
   },
 });

@@ -1,11 +1,11 @@
+@use './markdown';
+@use './theme';
+
+@use './hljs';
+//@use '~hljs/styles/monokai.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-:root {
-  --main-bg-color: #253036;
-  --text-color: #eee
-}
 
 p {
   letter-spacing: 0.5px;
@@ -16,9 +16,15 @@ body {
 }
 
 .input {
-  background: rgba(0,0,0,0.5);
   border-radius: 1em;
   padding: 0.5em 1em;
+}
+
+.kwizLogo {
+  width: 35px;
+  background-size: cover;
+  height: 35px;
+  background-position: center;
 }
 
 .chatBubble {
@@ -27,3 +33,5 @@ body {
   padding: 0.25em 1em;
   margin-bottom: 1em;
 }
+
+

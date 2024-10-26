@@ -49,12 +49,12 @@ async function init() {
 }
 
 // Create conversation
-export async function createConversation(id: string) {
+export async function createConversation(id: string, name: string) {
   const db = await init();
   const value = {
     id,
     date: new Date('2019-01-01'),
-    title: "New conversation"
+    title: "name"
   }
 
   await db.add('conversations', value);

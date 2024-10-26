@@ -1,4 +1,17 @@
 :root {
-  --main-bg-color: #253036;
-  --text-color: #eee
+
+  --text-color: rgb(33, 37, 41);
+
+
+  //brand
+  --primary-brand-color: #E6007E;
+  --secondary-brand-color: #FF8200;
+
+  // background
+  --primary-background-color: #ffffff;
+  --secondary-background-color: #f8f9fa;
+  --tertiary-background-color: #f1f3f5;
+
+  --chat-bubble: var(--tertiary-background-color);
+  --heading-color: var(--primary-brand-color);
 }

@@ -1,0 +1,91 @@
+
+.hljs {
+  display: block;
+  overflow-x: auto;
+  padding: 0.5em;
+  background: #282a36;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.875rem;
+  ////line-height: 1.5;
+  ////overflow-x: auto;
+  //margin: 1rem 0;
+
+  &-comment,
+  &-quote {
+    color: #a0a1a7;
+    font-style: italic;
+  }
+
+  &-doctag,
+  &-keyword,
+  &-formula {
+    color: #a626a4;
+  }
+
+  &-section,
+  &-name,
+  &-selector-tag,
+  &-deletion,
+  &-subst {
+    color: #e45649;
+  }
+
+  &-literal {
+    color: #0184bb;
+  }
+
+  &-string,
+  &-regexp,
+  &-addition,
+  &-attribute,
+  &-meta-string {
+    color: #50a14f;
+  }
+
+  &-built_in,
+  &-class &-title,
+  &-title.class_ {
+    color: #c18401;
+  }
+
+  &-attr,
+  &-variable,
+  &-template-variable,
+  &-type,
+  &-selector-class,
+  &-selector-attr,
+  &-selector-pseudo,
+  &-number {
+    color: #986801;
+  }
+
+  &-symbol,
+  &-bullet,
+  &-link,
+  &-meta,
+  &-selector-id,
+  &-title {
+    color: #4078f2;
+  }
+
+  &-emphasis {
+    font-style: italic;
+  }
+
+  &-strong {
+    font-weight: bold;
+  }
+
+
+}
+
+// Optional: Add a subtle border
+pre code.hljs {
+  border-radius: 1em;
+  margin-bottom: 1em;
+}
+
+// Optional: Add a nice box shadow for depth
+pre code.hljs {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
