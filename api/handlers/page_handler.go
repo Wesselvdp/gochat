@@ -6,6 +6,7 @@ import (
 	"github.com/a-h/templ"
 	"github.com/gin-gonic/gin"
 	openai "github.com/sashabaranov/go-openai"
+	"gochat/internal/ai"
 	views "gochat/views"
 	"gochat/views/components"
 	"net/http"
@@ -56,7 +57,7 @@ func ComponentHandler() gin.HandlerFunc {
 }
 
 func SendMessageHandler() gin.HandlerFunc {
-
+	fmt.Println("received")
 	return func(ctx *gin.Context) {
 		_, cancel := context.WithTimeout(context.Background(), appTimeout)
 		defer cancel()
@@ -67,30 +68,30 @@ func SendMessageHandler() gin.HandlerFunc {
 			return
 		}
 
+		aiResponse := ai.GetCompletion(data.Messages)
+		//fmt.Println(aiResponse)
 		response := gin.H{
-			"content": "success",
+			"content": aiResponse,
 			"data":    data.Messages,
 		}
-
 		ctx.JSON(http.StatusOK, response)
 	}
 }
 
 func ChatPageHandler() gin.HandlerFunc {
-	fmt.Println("running")
 	return func(ctx *gin.Context) {
 		_, cancel := context.WithTimeout(context.Background(), appTimeout)
 		defer cancel()
 
 		id := ctx.Param("id")
-		isNew := ctx.DefaultQuery("create", "f") == "true"
-		fmt.Println(isNew)
+		//isNew := ctx.DefaultQuery("create", "f") == "true"
+
 		isHTMX := ctx.GetHeader("HX-Request") != ""
 		if isHTMX {
 			// Serve partial HTML for HTMX requests
-			render(ctx, http.StatusOK, views.Chat(id, isNew))
+			render(ctx, http.StatusOK, views.Chat(id))
 		} else {
-			render(ctx, http.StatusOK, views.ChatPage(id, isNew))
+			render(ctx, http.StatusOK, views.ChatPage(id))
 		}
 	}
 }

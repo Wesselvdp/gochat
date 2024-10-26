@@ -4,6 +4,8 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/getsentry/sentry-go"
+	sentrygin "github.com/getsentry/sentry-go/gin"
 	"github.com/gin-gonic/gin"
 	"gochat/api"
 	"io"
@@ -17,6 +19,22 @@ import (
 
 func newServer() *gin.Engine {
 	r := gin.Default()
+
+	//if os.Getenv("ENV") == "production" {
+	// To initialize Sentry's handler, you need to initialize Sentry itself beforehand
+	if err := sentry.Init(sentry.ClientOptions{
+		Dsn:           os.Getenv("SENTRY_DSN"),
+		EnableTracing: true,
+		// Set TracesSampleRate to 1.0 to capture 100%
+		// of transactions for tracing.
+		// We recommend adjusting this value in production,
+		TracesSampleRate: 1.0,
+	}); err != nil {
+		fmt.Printf("Sentry initialization failed: %v\n", err)
+	}
+	r.Use(sentrygin.New(sentrygin.Options{}))
+
+	//}
 
 	api.AddRoutes(r)
 	return r

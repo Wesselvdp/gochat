@@ -12,23 +12,11 @@ templ Index() {
 				@components.SideBar()
 				// Inner
 				<div id="inner" class="h-screen max-h-[100dvh] md:max-w-[calc(100%-260px)] w-full max-w-full flex flex-col pt-2">
-					@NewChat()
+					@components.NewChat()
 				</div>
 			</div>
 		}
 	</html>
-}
-
-templ NewChat() {
-	<div class="flex-1 p-4 flex items-center justify-center w-full">
-		<div class="w-full flex justify-center flex-col items-center">
-			<div class="mb-4 text-center">
-				<h1 class="h1 text-4xl">Welkom,</h1>
-				<h2 class="h2 block text-2xl">Veilig, versleutelde AI. Het kan.</h2>
-			</div>
-			<text-area class="w-full"></text-area>
-		</div>
-	</div>
 }
 
 templ LoginPage() {
@@ -62,7 +50,7 @@ templ LoginPage() {
 	</html>
 }
 
-templ ChatPage(id string, isNew bool) {
+templ ChatPage(id string) {
 	<!DOCTYPE html>
 	<html lang="en">
 		@components.Header()
@@ -71,16 +59,15 @@ templ ChatPage(id string, isNew bool) {
 				@components.SideBar()
 				// Inner
 				<div id="inner" class="h-screen max-h-[100dvh] md:max-w-[calc(100%-260px)] w-full max-w-full flex flex-col pt-2">
-					@Chat(id, isNew)
+					@Chat(id)
 				</div>
 			</div>
 		}
 	</html>
 }
 
-templ Chat(id string, isNew bool) {
+templ Chat(id string) {
 	@templ.JSONScript("conversationId", id)
-	@templ.JSONScript("isNew", isNew)
 	<script>
 
 	function waitForGoChat(callback) {
@@ -93,12 +80,9 @@ templ Chat(id string, isNew bool) {
 
 	function initializeChat() {
 		const id = JSON.parse(document.getElementById('conversationId').textContent);
-		const isNew = JSON.parse(document.getElementById('isNew').textContent);
-		console.log('initializing', isNew)
-		if (isNew) window.goChat.recentConversations.init()
 
 		if(!id) return;
-		window.goChat.initConversation(id, isNew);
+		window.goChat.initConversation(id);
 	}
 
 		if (document.readyState === 'loading') {
@@ -110,43 +94,14 @@ templ Chat(id string, isNew bool) {
 	</script>
 	// bubbles
 	<div class="pb-2 px-2 flex flex-col justify-between w-full flex-auto overflow-auto h-0 max-w-full z-10 scrollbar-hidden ">
-		<div id="messageRoot" class="flex flex-col flex-auto z-10 max-w-3xl mx-auto w-full">
-			// user
-			// <div class="w-full">
-			// 	<div class="flex flex-col justify-between px-5 mb-3 max-w-5xl mx-auto rounded-lg group">
-			// 		<div class="flex justify-end pb-1">
-			// 			<div class="rounded-lg bg-slate-700 px-2 py-2">
-			// 				<p>Who is matthew damon?</p>
-			// 			</div>
-			// 		</div>
-			// 	</div>
-			// </div>
-			// Assistant
-			// <div class="flex gap-6">
-			// 	<div>
-			// 		@components.Avatar()
-			// 	</div>
-			// 	<div>
-			// 		<p class="font-bold mb-1">modelnames</p>
-			// 		<p class="max-w-2xl">That's a great questions. to be honest i do not have knowledge about that timeframebe honest i do not have knowledge about that timeframe be honest i do not have knowledge about that timeframe be honest i do not have knowledge about that timeframe</p>
-			// 	</div>
-			// </div>
-		</div>
+		<div id="messageRoot" class="flex pt-4 flex-col flex-auto z-10 max-w-3xl mx-auto w-full"></div>
 	</div>
 	// input
 	<div class="px-2 mb-3 w-full flex justify-center">
 		<form
 			class="max-w-3xl mx-auto w-full"
-			onsubmit="event.preventDefault(); window.goChat.conversation.handleUserInput(this);"
 		>
-			<input
-				class="input w-full"
-				autocomplete="off"
-				id="user-input"
-				type="text"
-				name="message"
-				placeholder="Type your message..."
-			/>
+			<text-area class="w-full"></text-area>
 		</form>
 	</div>
 }

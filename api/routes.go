@@ -27,7 +27,6 @@ func AddRoutes(r *gin.Engine) {
 		protected.GET("c/:id", handlers.ChatPageHandler())
 		protected.GET("component/:componentName", handlers.ComponentHandler())
 		protected.POST("send-message", handlers.SendMessageHandler())
-
 		//protected.GET("/table", handlers.Table())
 	}
 	// Analysis

@@ -29,7 +29,7 @@ func Footer() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<footer class=\"fixed p-1 bottom-0 bg-gray-100 w-full border-t\"><div class=\"rounded-lg p-4 text-xs italic text-gray-700 text-center\">&copy; Go Fullstack</div><script src=\"/static/bundle.js\" async></script></footer>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<footer class=\"fixed p-1 bottom-0 bg-gray-100 w-full border-t\"><div class=\"rounded-lg p-4 text-xs italic text-gray-700 text-center\">&copy; Go Fullstack</div><script src=\"/static/bundle.js\" async></script><link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css\"><script src=\"https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.0/marked.min.js\"></script><script src=\"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js\"></script></footer>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -87,7 +87,7 @@ func Body() templ.Component {
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<body class=\"bg-main\"><main class=\"\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<body class=\"bg-background-primary\"><main class=\"\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -132,7 +132,7 @@ func Avatar() templ.Component {
 	})
 }
 
-func Component(componentName string) templ.Component {
+func NewChat() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -153,8 +153,43 @@ func Component(componentName string) templ.Component {
 			templ_7745c5c3_Var5 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"flex-1 p-4 flex items-center justify-center w-full\"><div class=\"w-full flex justify-center flex-col items-center\"><div class=\"mb-4 text-center\"><h1 class=\"h1 text-4xl text-heading\">Welkom,</h1><h2 class=\"h2 block text-2xl\">Veilig, versleutelde AI. Het kan.</h2></div><text-area isNew=\"true\" class=\"w-full\"></text-area></div></div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return templ_7745c5c3_Err
+	})
+}
+
+func Component(componentName string) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var6 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var6 == nil {
+			templ_7745c5c3_Var6 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
 		if componentName == "avatar" {
 			templ_7745c5c3_Err = Avatar().Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		if componentName == "newchat" {
+			templ_7745c5c3_Err = NewChat().Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -179,20 +214,12 @@ func SideBar() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var6 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var6 == nil {
-			templ_7745c5c3_Var6 = templ.NopComponent
+		templ_7745c5c3_Var7 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var7 == nil {
+			templ_7745c5c3_Var7 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"bg-gray-900 p-4 flex flex-col rounded-r-2xl w-[260px]\"><div class=\"flex mb-4 items center gap-8 justify-between\"><button>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = Avatar().Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</button> <button hx-get=\"/\" hx-push-url=\"/\" hx-target=\"#inner\" class=\"flex mb-2 items-center gap-8 justify-between\"><span>Nieuw gesprek</span> <span class=\"material-symbols-outlined\">edit</span></button></div><div><div class=\"text-slate-500 mb-2\">Vorige gesprekken</div><div id=\"recentConversationsRoot\"></div></div><div class=\"mt-auto\"><button class=\"group flex items-center gap-4 opacity-70 hover:opacity-100 transition-all\"><span class=\"material-symbols-outlined\">logout</span> <span class=\"group-hover:opacity-100 opacity-0 transition-all\">uitloggen</span></button></div></div>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"bg-background-tertiary p-4 flex flex-col rounded-r-2xl w-[260px]\"><div class=\"flex mb-4 items center gap-8 justify-between\"><button><div class=\"kwizLogo\" style=\"background-image: url(&#39;/static/brand.svg&#39;)\"></div></button> <button hx-get=\"/component/newchat\" hx-push-url=\"/\" hx-target=\"#inner\" class=\"flex mb-2 items-center gap-8 justify-between\"><span class=\"whitespace-pre\">Nieuw gesprek</span> <span class=\"material-symbols-outlined\">edit</span></button></div><div><div class=\"text-slate-500 mb-2\">Vorige gesprekken</div><div id=\"recentConversationsRoot\"></div></div><div class=\"mt-auto\"><button class=\"group flex items-center gap-4 opacity-70 hover:opacity-100 transition-all\"><span class=\"material-symbols-outlined\">logout</span> <span class=\"group-hover:opacity-100 opacity-0 transition-all\">uitloggen</span></button></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
