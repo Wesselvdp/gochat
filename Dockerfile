@@ -18,6 +18,7 @@ RUN go mod download
 # Copy the entire project
 COPY . .
 # Build the application
+RUN templ generate
 RUN CGO_ENABLED=0 GOOS=linux go build -o /app/server ./cmd/main.go
 
 # Final stage
