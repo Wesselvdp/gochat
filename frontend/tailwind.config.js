@@ -1,10 +1,9 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ["./src/**/*.{html,js}", "../views/**/*.{html,templ,go}", "./views/**/*.{html,templ,go}"],
+  content: ["./src/**/*.{html,js}", "../views/**/*.{html,templ,go}", "../views/**/*.{html,templ,go}"],
   safelist: [
     'bg-main',
     'text-main',
-    'text-heading',
     'bg-tertiary',
     'bg-background-bubble'
   ],
