@@ -26,6 +26,7 @@ export default defineConfig({
       preprocessorOptions: {
         scss: {
           sourcemap: true,
+          plugins: [require('tailwindcss'), require('autoprefixer')],
           // If you have any SCSS options
         }
       }

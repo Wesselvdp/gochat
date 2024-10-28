@@ -31,3 +31,4 @@ frontend/.env
 /frontend/dist
 
 **/*_templ.go
+tmp/main
