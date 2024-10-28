@@ -7,12 +7,13 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "vite build",
-    "dev": "vite build --watch"
+    "dev": "vite build --watch --mode \"development\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@sentry/vite-plugin": "^2.22.6",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.47",
     "sass": "^1.77.8",
@@ -22,6 +23,7 @@
   },
   "dependencies": {
     "@sentry/browser": "^8.35.0",
+    "@sentry/tracing": "^7.114.0",
     "axios": "^1.7.7",
     "highlight.js": "^11.10.0",
     "hljs": "^6.2.3",

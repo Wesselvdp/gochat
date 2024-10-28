@@ -25,7 +25,7 @@ class Conversation {
     async drawMessages() {
        const messages = await db.messages.getByConversation(this.id);
        const rootEl = document.querySelector('#messageRoot') || document.querySelector('#inner');
-       console.log({messages, rootEl})
+       // console.log({messages, rootEl})
 
        if (!rootEl) {
            console.log('no root found for messages')
@@ -33,8 +33,7 @@ class Conversation {
        }
 
        rootEl.innerHTML = ''
-
-        // const messages = ['first', 'second', 'third']
+        
        messages.map(m => this.addMessageToDOM(m))
     }
 
@@ -129,3 +128,4 @@ export async function initConversation(id: string) {
     }
 
 }
+

@@ -2,13 +2,14 @@ package ai
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/sashabaranov/go-openai"
 	"net/http"
 	"time"
 )
 
-func GetCompletion(messages []openai.ChatCompletionMessage) string {
+func GetCompletion(messages []openai.ChatCompletionMessage) (string, error) {
 	config := openai.ClientConfig{
 		BaseURL: "https://c2wmuktxd69vwn-11434.proxy.runpod.net/v1",
 		HTTPClient: &http.Client{
@@ -27,15 +28,15 @@ func GetCompletion(messages []openai.ChatCompletionMessage) string {
 
 	if err != nil {
 		fmt.Printf("ChatCompletion error: %v\n", err)
-		return "oeps, er de AI server doet het even niet. Ik stuur de ontwikkelaar er nu op af. "
+		return "", err
 	}
 
 	// Check if there are any choices returned
 	if len(resp.Choices) == 0 {
-		return "No response generated"
+		return "", errors.New("MISSING CHOICES")
 	}
 
 	// Get the content from the first choice
 	content := resp.Choices[0].Message.Content
-	return content
+	return content, nil
 }

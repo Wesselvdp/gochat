@@ -4,8 +4,12 @@ import './components'
 import db from "./db";
 import './htmx-openai'
 // Make the function available on the window object
+import { initSentry } from './sentry';
 
 
+
+// Initialize Sentry before your app
+initSentry();
 
 const recentConversations = {
     init: async function() {

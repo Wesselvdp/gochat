@@ -68,7 +68,12 @@ func SendMessageHandler() gin.HandlerFunc {
 			return
 		}
 
-		aiResponse := ai.GetCompletion(data.Messages)
+		aiResponse, err := ai.GetCompletion(data.Messages)
+
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error(), "content": "Oeps, er is iets mis. We sturen er een ontwikkelaar op af"})
+		}
+
 		//fmt.Println(aiResponse)
 		response := gin.H{
 			"content": aiResponse,

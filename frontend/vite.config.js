@@ -1,4 +1,5 @@
 import { defineConfig } from "vite";
+import { sentryVitePlugin } from "@sentry/vite-plugin";
 import path from "path";
 
 export default defineConfig({
@@ -12,12 +13,14 @@ export default defineConfig({
       formats: ["iife"], // This ensures a single bundle
       fileName: () => "bundle.js", // This names your output file
     },
+
     rollupOptions: {
       output: {
         // Ensure no chunk splitting
         manualChunks: undefined,
       },
     },
+
     emptyOutDir: true,
     css: {
       preprocessorOptions: {
@@ -28,6 +31,14 @@ export default defineConfig({
       }
     }
   },
+
+  plugins: [
+    sentryVitePlugin({
+      org: "torgonio",
+      project: "go",
+      authToken: process.env.SENTRY_AUTH_TOKEN,
+    }),
+  ],
   resolve: {
     alias: [
       {
