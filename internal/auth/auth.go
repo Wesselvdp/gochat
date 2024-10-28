@@ -13,11 +13,11 @@ import (
 	"time"
 )
 
-// Todo: move to envs
-const (
-	clientID     = "6cff7fb3-321c-4845-b85a-4016f8ed52b9"
-	clientSecret = "Daz8Q~TCX5hgRwr-dDf0muvFHVtXO36Y8VQl0bzf"
-	tenantID     = "5159c2f7-a08e-49de-badb-221b53d4c4ed"
+// Todo make a config object with checks and fallbacks
+var (
+	clientSecret = os.Getenv("AZURE_CLIENT_SECRET")
+	tenantID     = os.Getenv("AZURE_TENANT_ID")
+	clientID     = os.Getenv("AZURE_CLIENT_ID")
 	scope        = "User.Read"
 )
 
@@ -147,7 +147,6 @@ func GetToken(code string) (string, error) {
 		return "", err
 	}
 
-	fmt.Println(result)
 	token, ok := result["access_token"].(string)
 	if !ok {
 		return "", fmt.Errorf("token not found in response")

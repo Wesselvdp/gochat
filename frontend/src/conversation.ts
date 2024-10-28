@@ -50,7 +50,6 @@ class Conversation {
     }
 
     async handleUserInput(content: string) {
-        console.log("handling")
 
         if (content.trim() === '') return; // Don't send empty content
 
@@ -63,10 +62,10 @@ class Conversation {
         const openMessages = messages.map((m: Message) => ({role: m.role, content: m.content}))
 
         const res = await axios.post(`/send-message`, {messages: openMessages})
-        if(res.status === 200) {
+        // if(res.status === 200) {
             const savedAssistantMessage = await db.messages.create(this.id, {role: 'assistant', content: res.data.content})
             await this.addMessageToDOM(savedAssistantMessage)
-        }
+        // }
 
         // If message is first, make it the title
         if(messages.length === 1) db.conversation.update({...this.data, title: content})
@@ -94,7 +93,7 @@ export async function createConversation(content: string) {
 }
 
 export async function initConversation(id: string) {
-    try {
+
     const savedConversation = await db.conversation.get(id)
     window.history.replaceState(null, '',window.location.origin + `/c/${id}`);
 
@@ -107,15 +106,18 @@ export async function initConversation(id: string) {
     if(!savedConversation) throw Error("failed saving conversation")
     const messages = await db.messages.getByConversation(id);
 
+    console.log({messages})
 
-
-    const conversation = new Conversation(savedConversation, messages);
 
     const lastMessage = messages.slice(-1, messages.length)[0]
+    const conversation = new Conversation(savedConversation, messages);
     if(lastMessage?.role === "user") {
-        const res = await axios.post(`/send-message`, {messages: messages.map(m => ({role: m.role, content: m.content}))})
-        if(res.status === 200) {
+        try {
+            const res = await axios.post(`/send-message`, {messages: messages.map(m => ({role: m.role, content: m.content}))})
             const savedAssistantMessage = await db.messages.create(conversation.id, {role: 'assistant', content: res.data.content})
+            await conversation.addMessageToDOM(savedAssistantMessage)
+        } catch (err) {
+            const savedAssistantMessage = await db.messages.create(conversation.id, {role: 'assistant', content: "Oeps, er ging iets mis."})
             await conversation.addMessageToDOM(savedAssistantMessage)
         }
     }
@@ -123,9 +125,7 @@ export async function initConversation(id: string) {
     (window as any).goChat.conversation = conversation
 
    await conversation.drawMessages()
-    } catch (err) {
-        console.log({err})
-    }
+
 
 }
 
