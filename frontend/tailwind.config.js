@@ -4,6 +4,7 @@ module.exports = {
   safelist: [
     'bg-main',
     'text-main',
+    'text-heading',
     'bg-tertiary',
     'bg-background-bubble'
   ],
