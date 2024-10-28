@@ -12,9 +12,10 @@ services:
     restart: always
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/health"]
-      interval: 30s
+      interval: 10s
       timeout: 10s
       retries: 3
+      start_period: 15s   # Added to give application time to start
     networks:
       - dokploy-network
     labels:
@@ -26,7 +27,16 @@ services:
       - "traefik.http.routers.gochat.entrypoints=websecure"
       - "traefik.http.routers.gochat.tls.certResolver=letsencrypt"
       - "traefik.http.routers.gochat.rule=Host(`app.torgon.io`)"
-
+  deploy:
+    labels:
+      - "traefik.http.services.gochat_service.loadbalancer.passhostheader=true"
+    update_config:
+      order: start-first
+      failure_action: rollback
+      delay: 10s
+    rollback_config:
+      parallelism: 0
+      order: stop-first
 networks:
   dokploy-network:
     external: true
