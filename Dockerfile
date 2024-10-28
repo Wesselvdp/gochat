@@ -11,6 +11,8 @@ FROM golang:1.22-alpine AS builder
 
 WORKDIR /app
 
+RUN go install github.com/a-h/templ/cmd/templ@latest
+
 # Copy go mod files first for better layer caching
 COPY go.* ./
 RUN go mod download
