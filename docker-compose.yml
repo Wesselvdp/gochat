@@ -27,16 +27,16 @@ services:
       - "traefik.http.routers.gochat.entrypoints=websecure"
       - "traefik.http.routers.gochat.tls.certResolver=letsencrypt"
       - "traefik.http.routers.gochat.rule=Host(`app.torgon.io`)"
-  deploy:
-    labels:
-      - "traefik.http.services.gochat_service.loadbalancer.passhostheader=true"
-    update_config:
-      order: start-first
-      failure_action: rollback
-      delay: 10s
-    rollback_config:
-      parallelism: 0
-      order: stop-first
+    deploy:
+      labels:
+        - "traefik.http.services.gochat_service.loadbalancer.passhostheader=true"
+      update_config:
+        order: start-first
+        failure_action: rollback
+        delay: 10s
+      rollback_config:
+        parallelism: 0
+        order: stop-first
 networks:
   dokploy-network:
     external: true
