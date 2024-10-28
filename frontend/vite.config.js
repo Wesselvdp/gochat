@@ -1,7 +1,8 @@
 import { defineConfig } from "vite";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
 import path from "path";
-
+import tailwindcss from 'tailwindcss'
+import autoprefixer from "autoprefixer";
 export default defineConfig({
   build: {
     target: "modules",
@@ -26,7 +27,7 @@ export default defineConfig({
       preprocessorOptions: {
         scss: {
           sourcemap: true,
-          plugins: [require('tailwindcss'), require('autoprefixer')],
+          plugins: [tailwindcss, autoprefixer],
           // If you have any SCSS options
         }
       }
