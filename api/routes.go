@@ -10,6 +10,7 @@ func AddRoutes(r *gin.Engine) {
 
 	//r.Static("/static", "./frontend/dist")templ
 	r.Static("/static", "./frontend/dist")
+	r.Static("/favicon.ico", "./frontend/dist/favicon.ico")
 	// Auth
 	r.GET("login", handlers.LoginPageHandler())
 	r.GET("/login/microsoft", auth.LoginHandler())
