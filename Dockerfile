@@ -1,9 +1,12 @@
 # Frontend build stage
 FROM node:20-alpine AS frontend-builder
 WORKDIR /app
+COPY views /views
+WORKDIR /app
+
 COPY frontend/package*.json ./
-RUN npm install
 COPY frontend/ ./
+RUN npm install
 RUN npm run build
 
 # Build stage
@@ -19,6 +22,7 @@ RUN go mod download
 
 # Copy the entire project
 COPY . .
+COPY  --from=frontend-builder /app/dist /frontend/dist
 # Build the application
 RUN templ generate
 RUN CGO_ENABLED=0 GOOS=linux go build -o /app/server ./cmd/main.go
