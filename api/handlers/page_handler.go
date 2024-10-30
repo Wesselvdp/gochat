@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"fmt"
 	"github.com/a-h/templ"
 	"github.com/gin-gonic/gin"
 	openai "github.com/sashabaranov/go-openai"
@@ -57,7 +56,6 @@ func ComponentHandler() gin.HandlerFunc {
 }
 
 func SendMessageHandler() gin.HandlerFunc {
-	fmt.Println("received")
 	return func(ctx *gin.Context) {
 		_, cancel := context.WithTimeout(context.Background(), appTimeout)
 		defer cancel()

@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gochat/api/handlers"
 	"gochat/internal/auth"
+	"net/http"
 )
 
 func AddRoutes(r *gin.Engine) {
@@ -19,6 +20,13 @@ func AddRoutes(r *gin.Engine) {
 	r.GET("/oauth/redirect/google", handlers.OAuthRedirectGoogle(r))
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
+	})
+	r.GET("/logout", func(c *gin.Context) {
+		// Clear the session cookie
+		auth.UnsetTokenCookie(c)
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Logged out successfully",
+		})
 	})
 
 	protected := r.Group("")

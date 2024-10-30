@@ -30,7 +30,7 @@ var redirectURI = func() string {
 
 var domain = func() string {
 	if os.Getenv("ENV") == "production" {
-		return "app.torgon.io"
+		return "torgon.io"
 	}
 	return "localhost"
 }()
@@ -43,6 +43,18 @@ func SetTokenCookie(c *gin.Context, token string) {
 		"/",
 		domain, // Change this to your domain
 		false,  // Set to true if using HTTPS
+		true,
+	)
+}
+
+func UnsetTokenCookie(c *gin.Context) {
+	c.SetCookie(
+		"token",
+		"",
+		-1,
+		"/",
+		domain, // Change this to your domain
+		true,   // Set to true if using HTTPS
 		true,
 	)
 }

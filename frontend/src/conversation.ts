@@ -2,6 +2,7 @@ import db, {Message, SavedConversation} from "./db";
 import axios from "axios";
 import { nanoid } from "nanoid";
 import { marked } from "marked";
+import {ChatCompletionMessageParam, ChatCompletionUserMessageParam} from "openai/src/resources/chat/completions";
 
 class Conversation {
     id
@@ -49,6 +50,8 @@ class Conversation {
         rootEl?.appendChild(div)
     }
 
+
+
     async handleUserInput(content: string) {
 
         if (content.trim() === '') return; // Don't send empty content
@@ -92,6 +95,17 @@ export async function createConversation(content: string) {
     window.location.href = window.location.origin + `/c/${id}`
 }
 
+async function getCompletion(messages: ChatCompletionMessageParam[]): Promise<string> {
+    try {
+        const res = await axios.post(`/send-message`, {messages})
+        return res.data.content
+    } catch (err) {
+        console.log(err)
+        return 'oops'
+    }
+}
+
+
 export async function initConversation(id: string) {
 
     const savedConversation = await db.conversation.get(id)
@@ -106,22 +120,34 @@ export async function initConversation(id: string) {
     if(!savedConversation) throw Error("failed saving conversation")
     const messages = await db.messages.getByConversation(id);
 
-    console.log({messages})
-
 
     const lastMessage = messages.slice(-1, messages.length)[0]
     const conversation = new Conversation(savedConversation, messages);
+
     if(lastMessage?.role === "user") {
         try {
-            const res = await axios.post(`/send-message`, {messages: messages.map(m => ({role: m.role, content: m.content}))})
-            const savedAssistantMessage = await db.messages.create(conversation.id, {role: 'assistant', content: res.data.content})
+            const answer = await getCompletion( messages.map(m => ({role: m.role, content: m.content} as ChatCompletionUserMessageParam)))
+            const savedAssistantMessage = await db.messages.create(conversation.id, {role: 'assistant', content: answer})
             await conversation.addMessageToDOM(savedAssistantMessage)
         } catch (err) {
+            console.log({err})
             const savedAssistantMessage = await db.messages.create(conversation.id, {role: 'assistant', content: "Oeps, er ging iets mis."})
             await conversation.addMessageToDOM(savedAssistantMessage)
         }
     }
 
+
+    if(messages.length === 1) {
+        const content = messages[0].content
+        const prompt = `
+            I want you to summarize the message below into 1 short sentence so it can serve as the title of the conversation the message is opening.
+            
+            message:
+            ${content}
+        `
+        const name= getCompletion([{role: 'user', content: prompt}])
+        db.conversation.update({...savedConversation, title: 'funky house'})
+    }
     (window as any).goChat.conversation = conversation
 
    await conversation.drawMessages()

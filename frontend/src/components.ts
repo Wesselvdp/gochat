@@ -30,7 +30,7 @@ class TextArea extends HTMLElement {
             <form
                 class="max-w-3xl mx-auto w-full" 
             >
-               <textarea name="message" class="input w-full bg-background-tertiary" id="growingTextarea" placeholder="Type your message..."></textarea>
+               <textarea name="message" class="input w-full bg-background-tertiary" id="growingTextarea" placeholder="Vertel..."></textarea>
            </form>
         `;
 

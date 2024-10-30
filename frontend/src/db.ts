@@ -54,17 +54,13 @@ export async function createConversation(id: string, name: string) {
   const value = {
     id,
     date: new Date('2019-01-01'),
-    title: "name"
+    title: "Nieuw gesprek"
   }
 
   await db.add('conversations', value);
-
-  // Temp mock data
-  // createMessage(id, {content: "This is a question", role: 'user'})
-  // createMessage(id, {content: "This is an answer", role: 'assistant'})
-
   return value
 }
+
 // Get conversation
 export async function getConversation(id: string) {
   const db = await init();
@@ -110,7 +106,7 @@ export async function getMessagesForConversation(conversationId: string) {
 
   try {
     // Use the index we created on conversationId
-    const messages = await db.getAllFromIndex('messages', 'conversationId', conversationId);
+    const messages: Message[] = await db.getAllFromIndex('messages', 'conversationId', conversationId);
 
     // Sort messages by timestamp if needed
     messages.sort((a, b) => a.timestamp - b.timestamp);
