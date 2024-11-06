@@ -60,67 +60,55 @@ templ Component(componentName string) {
 
 templ SideBar() {
 	// Sidebar
-	<nav-toggle>
-		<ul class="mt-2 space-y-2">
-			<li>
-				<a href="#" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">Home</a>
-			</li>
-			<li>
-				<a href="#" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">About</a>
-			</li>
-			<li>
-				<a href="#" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">Contact</a>
-			</li>
-		</ul>
-	</nav-toggle>
-	// 	<nav class="bg-background-tertiary p-4 flex flex-col rounded-r-2xl w-[260px] min-h-full max-md:fixed">
-	// 		<div class="pointer-events-auto absolute left-2 top-3 z-20 md:hidden opacity-100">
-	// 			<button
-	// 				class="inline-flex
-	//   items-center
-	//   justify-center
-	//   relative
-	//   shrink-0
-	//   ring-offset-2
-	//   ring-offset-bg-300
-	//   ring-accent-main-100
-	//   focus-visible:outline-none
-	//   focus-visible:ring-1
-	//   disabled:pointer-events-none
-	//   disabled:opacity-50
-	//   disabled:shadow-none
-	//   disabled:drop-shadow-none text-text-200
-	//           border-transparent
-	//           transition-colors
-	//           font-styrene
-	//           active:bg-bg-400
-	//           hover:bg-bg-500/40
-	//           hover:text-text-100 h-8 w-8 rounded-md active:scale-95"
-	// 			><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 32 32"><path d="M26 16a1 1 0 0 1-1 1H5a1 1 0 0 1 0-2h20a1 1 0 0 1 1 1ZM5 9h18a1 1 0 1 0 0-2H5a1 1 0 0 0 0 2Zm16 14H5a1 1 0 0 0 0 2h16a1 1 0 0 0 0-2Z"></path></svg></button>
-	// 		</div>
-	// 		<div class="mb-4 items center justify-between hidden md:flex">
-	// 			<button>
-	// 				<div class="kwizLogo" style="background-image: url('/static/brand.svg')"></div>
-	// 				// <img width="50px" src="static/brand.svg"/>
-	// 			</button>
-	// 			<button hx-get="/component/newchat" hx-push-url="/" hx-target="#inner" class="flex mb-2 items-center gap-8 justify-between">
-	// 				<span class="whitespace-pre">Nieuw gesprek</span>
-	// 				<span class="material-symbols-outlined">
-	// 					edit
-	// 				</span>
-	// 			</button>
-	// 		</div>
-	// 		<div>
-	// 			// <div class="text-slate-500 mb-2">Vorige gesprekken</div>
-	// 			// <div id="recentConversationsRoot"></div>
-	// 		</div>
-	// 		// <div class="mt-auto">
-	// 		// 	<button class="group flex items-center gap-4 opacity-70 hover:opacity-100 transition-all">
-	// 		// 		<span class="material-symbols-outlined">
-	// 		// 			logout
-	// 		// 		</span>
-	// 		// 		<span class="group-hover:opacity-100 opacity-0 transition-all">uitloggen</span>
-	// 		// 	</button>
-	// 		// </div>
-	// 	</nav>
+	// <side-nav></side-nav>
+	<nav class="bg-background-tertiary p-4 flex flex-col rounded-r-2xl w-[260px] min-h-full max-md:fixed">
+		<div class="pointer-events-auto absolute left-2 top-3 z-20 md:hidden opacity-100">
+			<button
+				class="inline-flex
+	  items-center
+	  justify-center
+	  relative
+	  shrink-0
+	  ring-offset-2
+	  ring-offset-bg-300
+	  ring-accent-main-100
+	  focus-visible:outline-none
+	  focus-visible:ring-1
+	  disabled:pointer-events-none
+	  disabled:opacity-50
+	  disabled:shadow-none
+	  disabled:drop-shadow-none text-text-200
+	          border-transparent
+	          transition-colors
+	          font-styrene
+	          active:bg-bg-400
+	          hover:bg-bg-500/40
+	          hover:text-text-100 h-8 w-8 rounded-md active:scale-95"
+			><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 32 32"><path d="M26 16a1 1 0 0 1-1 1H5a1 1 0 0 1 0-2h20a1 1 0 0 1 1 1ZM5 9h18a1 1 0 1 0 0-2H5a1 1 0 0 0 0 2Zm16 14H5a1 1 0 0 0 0 2h16a1 1 0 0 0 0-2Z"></path></svg></button>
+		</div>
+		<div class="mb-4 items center justify-between hidden md:flex">
+			<button>
+				<div class="kwizLogo" style="background-image: url('/static/brand.svg')"></div>
+				// <img width="50px" src="static/brand.svg"/>
+			</button>
+			<button hx-get="/component/newchat" hx-push-url="/" hx-target="#inner" class="flex mb-2 items-center gap-8 justify-between">
+				<span class="whitespace-pre">Nieuw gesprek</span>
+				<span class="material-symbols-outlined">
+					edit
+				</span>
+			</button>
+		</div>
+		<div>
+			<div class="text-slate-500 mb-2">Vorige gesprekken</div>
+			<div id="recentConversationsRoot"></div>
+		</div>
+		<div class="mt-auto">
+			<button class="group flex items-center gap-4 opacity-70 hover:opacity-100 transition-all">
+				<span class="material-symbols-outlined">
+					logout
+				</span>
+				<span class="group-hover:opacity-100 opacity-0 transition-all">uitloggen</span>
+			</button>
+		</div>
+	</nav>
 }
