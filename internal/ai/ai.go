@@ -6,12 +6,20 @@ import (
 	"fmt"
 	"github.com/sashabaranov/go-openai"
 	"net/http"
+	"os"
 	"time"
 )
 
 func GetCompletion(messages []openai.ChatCompletionMessage) (string, error) {
+
+	podId := os.Getenv("RUNPOD_POD_ID")
+
+	if len(podId) == 0 {
+		return "", errors.New("RUNPOD_POD_ID not set")
+	}
+
 	config := openai.ClientConfig{
-		BaseURL: "https://c2wmuktxd69vwn-11434.proxy.runpod.net/v1",
+		BaseURL: "https://" + podId + "-11434.proxy.runpod.net/v1",
 		HTTPClient: &http.Client{
 			Timeout: time.Second * 30,
 		},
