@@ -1,7 +1,9 @@
 package auth
 
 import (
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -71,8 +73,100 @@ func JWTMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		claims := &models.Claims{}
-		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		// Parse the token
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+			// Validate the signing method
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			}
+
+			// Get the tenant ID from the token
+			tenantID := token.Claims.(jwt.MapClaims)["tid"].(string)
+
+			// Fetch the OpenID Connect metadata document for the tenant
+			oidcMetadataURL := fmt.Sprintf("https://login.microsoftonline.com/%s/v2.0/.well-known/openid-configuration", tenantID)
+			resp, err := http.Get(oidcMetadataURL)
+			if err != nil {
+				return nil, err
+			}
+			defer resp.Body.Close()
+
+			var metadata struct {
+				JwksURI string `json:"jwks_uri"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&metadata); err != nil {
+				return nil, err
+			}
+
+			// Fetch the signing keys from the JWKS endpoint
+			resp, err = http.Get(metadata.JwksURI)
+			if err != nil {
+				return nil, err
+			}
+			defer resp.Body.Close()
+
+			var jwks struct {
+				Keys []struct {
+					Kid string   `json:"kid"`
+					X5C []string `json:"x5c"`
+				} `json:"keys"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&jwks); err != nil {
+				return nil, err
+			}
+
+			// Find the correct signing key
+			var signingKey interface{}
+			for _, key := range jwks.Keys {
+				if key.Kid == token.Header["kid"].(string) {
+					// Decode the key from base64
+					block, _ := pem.Decode([]byte(key.X5C[0]))
+					if block == nil {
+						return nil, fmt.Errorf("failed to parse PEM block containing the key")
+					}
+
+					cert, err := x509.ParseCertificate(block.Bytes)
+					if err != nil {
+						return nil, err
+					}
+
+					signingKey = cert.PublicKey
+					break
+				}
+			}
+
+			if signingKey == nil {
+				return nil, fmt.Errorf("signing key not found")
+			}
+
+			claims, ok := token.Claims.(jwt.MapClaims)
+			if !ok {
+				return nil, fmt.Errorf("invalid token claims")
+			}
+
+			// Validate the expiration time
+			if float64(time.Now().Unix()) > claims["exp"].(float64) {
+				return nil, fmt.Errorf("token is expired")
+			}
+
+			// Validate the issued at time
+			if float64(time.Now().Unix()) < claims["iat"].(float64) {
+				return nil, fmt.Errorf("token used before issued")
+			}
+
+			// Validate the not before time
+			if float64(time.Now().Unix()) < claims["nbf"].(float64) {
+				return nil, fmt.Errorf("token not yet valid")
+			}
+
+			// Validate the issuer
+			iss := token.Claims.(jwt.MapClaims)["iss"].(string)
+			if iss != fmt.Sprintf("https://login.microsoftonline.com/%s/v2.0", tenantID) {
+				return nil, fmt.Errorf("invalid issuer: %s", iss)
+			}
+
+			return signingKey, nil
+
 			return jwtKey, nil
 		})
 
@@ -87,7 +181,10 @@ func JWTMiddleware() gin.HandlerFunc {
 		c.Header("Pragma", "no-cache")
 		c.Header("Expires", "0")
 
-		c.Set("userID", claims.UserID)
+		// Get the user ID from the token claims
+		claims := token.Claims.(jwt.MapClaims)
+		userID := claims["sub"].(string)
+		c.Set("userID", userID)
 		c.Next()
 	}
 }
@@ -140,7 +237,7 @@ type OAuthAccessResponse struct {
 }
 
 func GetToken(code string) (string, error) {
-	tokenURL := fmt.Sprintf("https://login.microsoftonline.com/%s/oauth2/v2.0/token", tenantID)
+	tokenURL := fmt.Sprintf("https://login.microsoftonline.com/organizations/oauth2/v2.0/token")
 	data := url.Values{}
 	data.Set("grant_type", "authorization_code")
 	data.Set("client_id", clientID)
@@ -150,26 +247,33 @@ func GetToken(code string) (string, error) {
 
 	resp, err := http.PostForm(tokenURL, data)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error making token request: %w", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error reading token response body: %w", err)
 	}
 
-	var result map[string]interface{}
+	var result struct {
+		AccessToken string `json:"access_token"`
+		Error       string `json:"error"`
+		ErrorDesc   string `json:"error_description"`
+	}
 	if err := json.Unmarshal(body, &result); err != nil {
-		return "", err
+		return "", fmt.Errorf("error parsing token response: %w", err)
 	}
 
-	token, ok := result["access_token"].(string)
-	if !ok {
+	if result.Error != "" {
+		return "", fmt.Errorf("error getting token: %s (%s)", result.Error, result.ErrorDesc)
+	}
+
+	if result.AccessToken == "" {
 		return "", fmt.Errorf("token not found in response")
 	}
 
-	return token, nil
+	return result.AccessToken, nil
 }
 
 func LoginHandler() gin.HandlerFunc {
