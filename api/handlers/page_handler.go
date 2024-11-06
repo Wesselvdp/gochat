@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	openai "github.com/sashabaranov/go-openai"
 	"gochat/internal/ai"
+	"gochat/internal/auth"
 	views "gochat/views"
 	"gochat/views/components"
 	"net/http"
@@ -38,6 +39,16 @@ func IndexPageHandler() gin.HandlerFunc {
 
 func LoginPageHandler() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		_, cancel := context.WithTimeout(context.Background(), appTimeout)
+		defer cancel()
+
+		render(ctx, http.StatusOK, views.LoginPage())
+	}
+}
+
+func LogoutPageHandler() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		auth.UnsetTokenCookie(ctx)
 		_, cancel := context.WithTimeout(context.Background(), appTimeout)
 		defer cancel()
 
