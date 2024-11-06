@@ -82,6 +82,11 @@ func JWTMiddleware() gin.HandlerFunc {
 			return
 		}
 
+		// Make sure user's can't go back in browser history
+		c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
+		c.Header("Pragma", "no-cache")
+		c.Header("Expires", "0")
+
 		c.Set("userID", claims.UserID)
 		c.Next()
 	}
