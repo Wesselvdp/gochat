@@ -23,7 +23,15 @@ class Conversation {
         return db.messages.getByConversation(this.id);
     }
 
-    async drawMessages() {
+    setLoading(isLoading: boolean) {
+        if(isLoading) {
+           return  this.addMessageToDOM({role: 'assistant', content: '. . .', id: "loadingMessage", timestamp: 0, conversationId: "1"})
+        }
+        const loadingEl = document.getElementById("loadingMessage")
+        loadingEl?.remove()
+    }
+
+   async  drawMessages() {
        const messages = await db.messages.getByConversation(this.id);
        const rootEl = document.querySelector('#messageRoot') || document.querySelector('#inner');
        // console.log({messages, rootEl})
@@ -39,26 +47,30 @@ class Conversation {
     }
 
 
-    async addMessageToDOM(message: Message) {
+    addMessageToDOM(message: Message) {
         const rootEl = document.querySelector('#messageRoot');
         if (!rootEl) return;
         // const el =  document.createElement('user-message')
         const div = document.createElement("div");
+        div.setAttribute("id", message.id)
         if (message.role === 'user') div.innerHTML = `<user-message>${message.content}</user-message>`;
         if (message.role === 'assistant') div.innerHTML = `<assistant-message>${message.content}</assistant-message>`;
 
         rootEl?.appendChild(div)
+        const nestedElement = document.querySelector("#scrollContainer")
+        nestedElement?.scrollTo(0, nestedElement.scrollHeight);
+        // window.scrollTo(0, document.body.scrollHeight);
     }
 
 
 
     async handleUserInput(content: string) {
-
         if (content.trim() === '') return; // Don't send empty content
 
         // Save message to db
         const savedUserMessage = await db.messages.create(this.id, {role: 'user', content})
-        await this.addMessageToDOM(savedUserMessage)
+        this.addMessageToDOM(savedUserMessage)
+        this.setLoading(true)
 
         // Get past messages
         const messages = await (window as any).goChat.conversation.getMessages()
@@ -67,11 +79,13 @@ class Conversation {
         const res = await axios.post(`/send-message`, {messages: openMessages})
         // if(res.status === 200) {
             const savedAssistantMessage = await db.messages.create(this.id, {role: 'assistant', content: res.data.content})
-            await this.addMessageToDOM(savedAssistantMessage)
+        this.setLoading(false)
+
+        await this.addMessageToDOM(savedAssistantMessage)
         // }
 
         // If message is first, make it the title
-        if(messages.length === 1) db.conversation.update({...this.data, title: content})
+        // if(messages.length === 1) db.conversation.update({...this.data, title: content})
     }
 
     async handleServerResponse(r: any) {
@@ -90,8 +104,13 @@ class Conversation {
 
 export async function createConversation(content: string) {
     const id  = nanoid()
-    await db.conversation.create(id, content)
-    await db.messages.create(id, {role: 'user', content})
+
+    // Run independent database operations concurrently
+    const [conversation, message] = await Promise.all([
+        db.conversation.create(id, content),
+        db.messages.create(id, {role: 'user', content})
+    ]);
+
     window.location.href = window.location.origin + `/c/${id}`
 }
 
@@ -104,6 +123,8 @@ async function getCompletion(messages: ChatCompletionMessageParam[]): Promise<st
         return 'oops'
     }
 }
+
+
 
 
 export async function initConversation(id: string) {
@@ -123,6 +144,7 @@ export async function initConversation(id: string) {
 
     const lastMessage = messages.slice(-1, messages.length)[0]
     const conversation = new Conversation(savedConversation, messages);
+    await conversation.drawMessages()
 
     if(lastMessage?.role === "user") {
         try {
@@ -145,8 +167,8 @@ export async function initConversation(id: string) {
             message:
             ${content}
         `
-        const name= getCompletion([{role: 'user', content: prompt}])
-        db.conversation.update({...savedConversation, title: 'funky house'})
+        const title= await getCompletion([{role: 'user', content: prompt}])
+        db.conversation.update({...savedConversation, title})
     }
     (window as any).goChat.conversation = conversation
 
