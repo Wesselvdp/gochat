@@ -237,7 +237,7 @@ type OAuthAccessResponse struct {
 }
 
 func GetToken(code string) (string, error) {
-	tokenURL := fmt.Sprintf("https://login.microsoftonline.com/organizations/oauth2/v2.0/token")
+	tokenURL := fmt.Sprintf("https://login.microsoftonline.com/common/oauth2/v2.0/token")
 	data := url.Values{}
 	data.Set("grant_type", "authorization_code")
 	data.Set("client_id", clientID)
@@ -278,9 +278,9 @@ func GetToken(code string) (string, error) {
 
 func LoginHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		authURL := fmt.Sprintf("https://login.microsoftonline.com/%s/oauth2/v2.0/authorize?"+
+		authURL := fmt.Sprintf("https://login.microsoftonline.com/common/oauth2/v2.0/authorize?"+
 			"client_id=%s&response_type=code&redirect_uri=%s&response_mode=query&scope=%s",
-			tenantID, clientID, url.QueryEscape(redirectURI), url.QueryEscape(scope))
+			clientID, url.QueryEscape(redirectURI), url.QueryEscape(scope))
 		c.Redirect(http.StatusTemporaryRedirect, authURL)
 	}
 }
