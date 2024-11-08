@@ -23,12 +23,10 @@ var (
 	scope        = "User.Read"
 )
 
-var redirectURI = func() string {
-	if os.Getenv("ENV") == "production" {
-		return "https://app.torgon.io/oauth/redirect/azure"
-	}
-	return "http://localhost:8080/oauth/redirect/azure"
-}()
+func getRedirectURI() string {
+	domain := os.Getenv("DOMAIN")
+	return "https://" + domain + "/oauth/redirect/azure"
+}
 
 var domain = func() string {
 	if os.Getenv("ENV") == "production" {
@@ -243,7 +241,7 @@ func GetToken(code string) (string, error) {
 	data.Set("client_id", clientID)
 	data.Set("client_secret", clientSecret)
 	data.Set("code", code)
-	data.Set("redirect_uri", redirectURI)
+	data.Set("redirect_uri", getRedirectURI())
 
 	resp, err := http.PostForm(tokenURL, data)
 	if err != nil {
@@ -278,9 +276,11 @@ func GetToken(code string) (string, error) {
 
 func LoginHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		fmt.Println("heres")
+		fmt.Println(getRedirectURI())
 		authURL := fmt.Sprintf("https://login.microsoftonline.com/common/oauth2/v2.0/authorize?"+
 			"client_id=%s&response_type=code&redirect_uri=%s&response_mode=query&scope=%s",
-			clientID, url.QueryEscape(redirectURI), url.QueryEscape(scope))
+			clientID, url.QueryEscape(getRedirectURI()), url.QueryEscape(scope))
 		c.Redirect(http.StatusTemporaryRedirect, authURL)
 	}
 }
