@@ -167,7 +167,7 @@ func JWTMiddleware() gin.HandlerFunc {
 
 			return signingKey, nil
 
-			return jwtKey, nil
+			//return jwtKey, nil
 		})
 
 		if err != nil || !token.Valid {
