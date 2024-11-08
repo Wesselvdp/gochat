@@ -1,10 +1,57 @@
 package api
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"gochat/api/handlers"
 	"gochat/internal/auth"
+	"io/ioutil"
+	"net/http"
+	"os"
 )
+
+type RequestBody struct {
+	Model     string `json:"model"`
+	KeepAlive int    `json:"keep_alive"`
+}
+
+func afterRequestMiddleware(c *gin.Context) {
+	// Execute the main handler
+	c.Next()
+
+	fmt.Println("running!")
+	podId := os.Getenv("RUNPOD_POD_ID")
+
+	// Check if the request method and path match the target request
+
+	// Parse the request body
+	body := RequestBody{
+		Model:     "gemma2:27b",
+		KeepAlive: -1,
+	}
+
+	if err := c.BindJSON(&body); err != nil {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	// Make the API call
+	apiURL := "https://" + podId + "-11434.proxy.runpod.net/api/generate"
+	jsonBody, _ := json.Marshal(body)
+	resp, err := http.Post(apiURL, "application/json", bytes.NewBuffer(jsonBody))
+	if err != nil {
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	// Read the response body
+	respBody, _ := ioutil.ReadAll(resp.Body)
+	fmt.Println("API response:", string(respBody))
+
+}
 
 func AddRoutes(r *gin.Engine) {
 
@@ -28,7 +75,7 @@ func AddRoutes(r *gin.Engine) {
 		protected.GET("", handlers.IndexPageHandler())
 		protected.GET("c/:id", handlers.ChatPageHandler())
 		protected.GET("component/:componentName", handlers.ComponentHandler())
-		protected.POST("send-message", handlers.SendMessageHandler())
+		protected.POST("send-message", afterRequestMiddleware, handlers.SendMessageHandler())
 		//protected.GET("/table", handlers.Table())
 	}
 	// Analysis
