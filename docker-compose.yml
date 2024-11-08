@@ -10,6 +10,7 @@ services:
     environment:
       - PORT=8080
       - ENVIRONMENT=production
+      - DOMAIN=${DOMAIN}
       - ENV=production
     restart: always
     healthcheck:
@@ -22,13 +23,11 @@ services:
       - dokploy-network
     labels:
       - "traefik.enable=true"
-      # Add a unique service name
       - "traefik.http.services.gochat_service.loadbalancer.server.port=8080"
-      # Update the router to explicitly use this service
       - "traefik.http.routers.gochat.service=gochat_service"
       - "traefik.http.routers.gochat.entrypoints=websecure"
       - "traefik.http.routers.gochat.tls.certResolver=letsencrypt"
-      - "traefik.http.routers.gochat.rule=Host(`app.torgon.io`)"
+      - "traefik.http.routers.gochat.rule=Host(`${DOMAIN}`)"
     deploy:
       labels:
         - "traefik.http.services.gochat_service.loadbalancer.passhostheader=true"
