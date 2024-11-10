@@ -20,12 +20,19 @@ var (
 	clientSecret = os.Getenv("AZURE_CLIENT_SECRET")
 	tenantID     = os.Getenv("AZURE_TENANT_ID")
 	clientID     = os.Getenv("AZURE_CLIENT_ID")
-	scope        = "User.Read"
+	scope        = "User.Read offline_access openid email profile"
 )
+
+var protocol = func() string {
+	if os.Getenv("ENV") == "production" {
+		return "https"
+	}
+	return "http"
+}()
 
 func getRedirectURI() string {
 	domain := os.Getenv("DOMAIN")
-	return "https://" + domain + "/oauth/redirect/azure"
+	return protocol + "://" + domain + "/oauth/redirect/azure"
 }
 
 var domain = func() string {
@@ -242,6 +249,7 @@ func GetToken(code string) (string, error) {
 	data.Set("client_secret", clientSecret)
 	data.Set("code", code)
 	data.Set("redirect_uri", getRedirectURI())
+	data.Set("scope", scope) // Add this line
 
 	resp, err := http.PostForm(tokenURL, data)
 	if err != nil {
@@ -276,10 +284,8 @@ func GetToken(code string) (string, error) {
 
 func LoginHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		fmt.Println("heres")
-		fmt.Println(getRedirectURI())
 		authURL := fmt.Sprintf("https://login.microsoftonline.com/common/oauth2/v2.0/authorize?"+
-			"client_id=%s&response_type=code&redirect_uri=%s&response_mode=query&scope=%s",
+			"client_id=%s&response_type=code&redirect_uri=%s&response_mode=query&scope=%s&prompt=consent",
 			clientID, url.QueryEscape(getRedirectURI()), url.QueryEscape(scope))
 		c.Redirect(http.StatusTemporaryRedirect, authURL)
 	}
