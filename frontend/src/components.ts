@@ -68,11 +68,11 @@ class RecentConversation extends HTMLElement {
         // Inject the HTML content into the component
         this.innerHTML = `
             <div hx-get="/c/${id}" hx-target="#inner" class="group cursor-pointer opacity-70 hover:opacity-100 transition-all flex gap-2 items-center mb-1 max-w-2xl">
-                <div class="flex items-center gap-3"   hx-target="#inner">
+                <div class="flex items-center gap-3 max-w-[80%]"   hx-target="#inner">
                     <span class="material-symbols-outlined text-sm">
                         forum
                     </span>
-                    <span>${title} </span>
+                    <span class="overflow-ellipsis overflow-hidden whitespace-nowrap">${title} </span>
                 </div>
                 
                 <span id="deleteBtn" class="group-hover:opacity-100 opacity-0 material-symbols-outlined text-sm ml-auto">
