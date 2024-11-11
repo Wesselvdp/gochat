@@ -20,13 +20,28 @@ async function handleMicrosoftLogin(page: Page) {
   await page.locator('#acceptButton').click();
 }
 
+
+
 test.describe('Authentication Flow', () => {
   test('should login with Microsoft account', async ({ page }) => {
-    //
     // // Handle the Microsoft login flow
     await handleMicrosoftLogin(page);
-    //
-    // // Verify successful login (adjust according to your app's UI)
+
     await expect(page.locator('textarea[name="message"]')).toBeVisible();
+
+    // Create a new chat
+    await page.fill('#growingTextarea', "Say this is a test");
+    // Wait for the API call to complete after pressing Enter
+    await Promise.all([
+      // Wait for the network request that matches your API endpoint
+      page.waitForResponse(response =>
+          response.url().includes('/send-message') &&
+          response.status() === 200
+      ),
+      await page.keyboard.press('Enter')
+    ]);
+
+    await expect(page.locator('assistant-message .markdown-content')).toContainText("This is a test. ")
+    // // Verify successful login (adjust according to your app's UI)
   });
 });
