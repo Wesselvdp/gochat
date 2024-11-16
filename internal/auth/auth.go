@@ -285,7 +285,7 @@ func GetToken(code string) (string, error) {
 func LoginHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authURL := fmt.Sprintf("https://login.microsoftonline.com/common/oauth2/v2.0/authorize?"+
-			"client_id=%s&response_type=code&redirect_uri=%s&response_mode=query&scope=%s&prompt=consent",
+			"client_id=%s&response_type=code&redirect_uri=%s&response_mode=query&scope=%s",
 			clientID, url.QueryEscape(getRedirectURI()), url.QueryEscape(scope))
 		c.Redirect(http.StatusTemporaryRedirect, authURL)
 	}
