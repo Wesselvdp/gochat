@@ -189,15 +189,19 @@ func JWTMiddleware() gin.HandlerFunc {
 		// Get the user ID from the token claims
 		claims := token.Claims.(jwt.MapClaims)
 		userID := claims["sub"].(string)
+		localID := int64(claims["db_id"].(float64))
+
 		c.Set("userID", userID)
+		c.Set("localID", localID)
 		c.Next()
 	}
 }
 
-func CreateToken(userID string) (string, error) {
+func CreateToken(externalUserID string, databaseUserID int64) (string, error) {
 	expirationTime := time.Now().Add(1 * time.Hour)
 	claims := &models.Claims{
-		UserID: userID,
+		UserID:  externalUserID,
+		LocalId: databaseUserID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

@@ -18,6 +18,7 @@ func (s MyNullString) MarshalJSON() ([]byte, error) {
 }
 
 type Claims struct {
-	UserID string `json:"user_id"`
+	UserID  string `json:"sub"`
+	LocalId int64  `json:"localId"`
 	jwt.RegisteredClaims
 }
