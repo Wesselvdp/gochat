@@ -10,56 +10,193 @@ import (
 	"database/sql"
 )
 
-const createUser = `-- name: CreateUser :one
-INSERT INTO users (
- email, company
+const createAccount = `-- name: CreateAccount :one
+INSERT INTO account (
+    id, name, updatedAt, createdAt
 ) VALUES (
-  ?, ?
+    ?, ?, ?, ?
 )
-RETURNING email, company
+RETURNING id, name, createdat, updatedat
+`
+
+type CreateAccountParams struct {
+	ID        int
+	Name      sql.NullString
+	Updatedat sql.NullString
+	Createdat sql.NullString
+}
+
+func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error) {
+	row := q.db.QueryRowContext(ctx, createAccount,
+		arg.ID,
+		arg.Name,
+		arg.Updatedat,
+		arg.Createdat,
+	)
+	var i Account
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Createdat,
+		&i.Updatedat,
+	)
+	return i, err
+}
+
+const createUser = `-- name: CreateUser :one
+INSERT INTO user (
+    email, name, account, updatedAt, createdAt
+) VALUES (
+    ?, ?, ?, ?, ?
+)
+RETURNING id, name, email, account, externalid, createdat, updatedat
 `
 
 type CreateUserParams struct {
-	Email   sql.NullString
-	Company sql.NullString
+	Email     sql.NullString
+	Name      sql.NullString
+	Account   int64
+	Updatedat sql.NullString
+	Createdat sql.NullString
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, createUser, arg.Email, arg.Company)
+	row := q.db.QueryRowContext(ctx, createUser,
+		arg.Email,
+		arg.Name,
+		arg.Account,
+		arg.Updatedat,
+		arg.Createdat,
+	)
 	var i User
-	err := row.Scan(&i.Email, &i.Company)
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.Account,
+		&i.Externalid,
+		&i.Createdat,
+		&i.Updatedat,
+	)
 	return i, err
 }
 
-const deleteUser = `-- name: DeleteUser :exec
-DELETE FROM users
-WHERE email = ?
+const deleteAccount = `-- name: DeleteAccount :exec
+DELETE FROM account
+WHERE id = ?
 `
 
-func (q *Queries) DeleteUser(ctx context.Context, email sql.NullString) error {
-	_, err := q.db.ExecContext(ctx, deleteUser, email)
+func (q *Queries) DeleteAccount(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteAccount, id)
 	return err
 }
 
-const getUser = `-- name: GetUser :one
-SELECT email, company FROM users
-WHERE email = ? LIMIT 1
+const deleteUser = `-- name: DeleteUser :exec
+DELETE FROM user
+WHERE id = ?
 `
 
-func (q *Queries) GetUser(ctx context.Context, email sql.NullString) (User, error) {
-	row := q.db.QueryRowContext(ctx, getUser, email)
-	var i User
-	err := row.Scan(&i.Email, &i.Company)
+func (q *Queries) DeleteUser(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteUser, id)
+	return err
+}
+
+const getAccount = `-- name: GetAccount :one
+SELECT id, name, createdat, updatedat FROM account
+WHERE id = ? LIMIT 1
+`
+
+func (q *Queries) GetAccount(ctx context.Context, id int64) (Account, error) {
+	row := q.db.QueryRowContext(ctx, getAccount, id)
+	var i Account
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Createdat,
+		&i.Updatedat,
+	)
 	return i, err
 }
 
-const listUsers = `-- name: ListUsers :many
-SELECT email, company FROM users
-ORDER BY moment
+const getUser = `-- name: GetUser :one
+SELECT id, name, email, account, externalid, createdat, updatedat FROM user
+WHERE id = ? LIMIT 1
 `
 
-func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
-	rows, err := q.db.QueryContext(ctx, listUsers)
+// Users
+func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUser, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.Account,
+		&i.Externalid,
+		&i.Createdat,
+		&i.Updatedat,
+	)
+	return i, err
+}
+
+const getUserByEmail = `-- name: GetUserByEmail :one
+SELECT id, name, email, account, externalid, createdat, updatedat FROM user
+WHERE email = ? LIMIT 1
+`
+
+func (q *Queries) GetUserByEmail(ctx context.Context, email sql.NullString) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.Account,
+		&i.Externalid,
+		&i.Createdat,
+		&i.Updatedat,
+	)
+	return i, err
+}
+
+const listAccount = `-- name: ListAccount :many
+SELECT id, name, createdat, updatedat FROM account
+`
+
+func (q *Queries) ListAccount(ctx context.Context) ([]Account, error) {
+	rows, err := q.db.QueryContext(ctx, listAccount)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Account
+	for rows.Next() {
+		var i Account
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Createdat,
+			&i.Updatedat,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUser = `-- name: ListUser :many
+SELECT id, name, email, account, externalid, createdat, updatedat FROM user
+`
+
+func (q *Queries) ListUser(ctx context.Context) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, listUser)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +204,15 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 	var items []User
 	for rows.Next() {
 		var i User
-		if err := rows.Scan(&i.Email, &i.Company); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Email,
+			&i.Account,
+			&i.Externalid,
+			&i.Createdat,
+			&i.Updatedat,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

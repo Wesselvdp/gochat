@@ -63,7 +63,7 @@ func AddRoutes(r *gin.Engine) {
 	r.GET("/login/microsoft", auth.LoginHandler())
 	r.GET("/login/google", auth.OauthGoogleLogin())
 	r.GET("/oauth/redirect/azure", handlers.OAuthRedirectAzure(r))
-	r.GET("/oauth/redirect/google", handlers.OAuthRedirectGoogle(r))
+	//r.GET("/oauth/redirect/google", handlers.OAuthRedirectGoogle(r))
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})

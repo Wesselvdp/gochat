@@ -8,7 +8,19 @@ import (
 	"database/sql"
 )
 
+type Account struct {
+	ID        int64
+	Name      sql.NullString
+	Createdat sql.NullString
+	Updatedat sql.NullString
+}
+
 type User struct {
-	Email   sql.NullString
-	Company sql.NullString
+	ID         int64
+	Name       sql.NullString
+	Email      sql.NullString
+	Account    int64
+	Externalid sql.NullString
+	Createdat  sql.NullString
+	Updatedat  sql.NullString
 }

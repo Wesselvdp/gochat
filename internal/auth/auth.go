@@ -1,9 +1,7 @@
 package auth
 
 import (
-	"crypto/x509"
 	"encoding/json"
-	"encoding/pem"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -18,7 +16,6 @@ import (
 // Todo make a config object with checks and fallbacks
 var (
 	clientSecret = os.Getenv("AZURE_CLIENT_SECRET")
-	tenantID     = os.Getenv("AZURE_TENANT_ID")
 	clientID     = os.Getenv("AZURE_CLIENT_ID")
 	scope        = "User.Read offline_access openid email profile"
 )
@@ -53,6 +50,17 @@ func SetTokenCookie(c *gin.Context, token string) {
 		true,
 	)
 }
+func SetUserCookie(c *gin.Context, email string) {
+	c.SetCookie(
+		"email",
+		email,
+		3600*24, // 1 day
+		"/",
+		domain, // Change this to your domain
+		false,  // Set to true if using HTTPS
+		true,
+	)
+}
 
 func UnsetTokenCookie(c *gin.Context) {
 	c.SetCookie(
@@ -66,11 +74,30 @@ func UnsetTokenCookie(c *gin.Context) {
 	)
 }
 
+// GetUser helper function to get user from context
+func GetUser(c *gin.Context) int64 {
+	user, exists := c.Get("localID")
+	if !exists {
+		fmt.Println("user not found in context")
+		return 0
+	}
+
+	// Type assertion to check if the underlying type is an integer
+	userID, ok := user.(int)
+	if !ok {
+		fmt.Println("user ID is not an integer")
+		return 0 // Or handle the error differently, e.g., return an error value
+	}
+
+	return int64(userID)
+}
+
 // Todo move to upper scope
 var jwtKey = []byte("MY_S4crEt_k4y")
 
 func JWTMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
+
 		tokenString, err := c.Cookie("token")
 		if err != nil {
 			c.Redirect(http.StatusFound, "/login")
@@ -85,95 +112,23 @@ func JWTMiddleware() gin.HandlerFunc {
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
 
-			// Get the tenant ID from the token
-			tenantID := token.Claims.(jwt.MapClaims)["tid"].(string)
-
-			// Fetch the OpenID Connect metadata document for the tenant
-			oidcMetadataURL := fmt.Sprintf("https://login.microsoftonline.com/%s/v2.0/.well-known/openid-configuration", tenantID)
-			resp, err := http.Get(oidcMetadataURL)
-			if err != nil {
-				return nil, err
-			}
-			defer resp.Body.Close()
-
-			var metadata struct {
-				JwksURI string `json:"jwks_uri"`
-			}
-			if err := json.NewDecoder(resp.Body).Decode(&metadata); err != nil {
-				return nil, err
-			}
-
-			// Fetch the signing keys from the JWKS endpoint
-			resp, err = http.Get(metadata.JwksURI)
-			if err != nil {
-				return nil, err
-			}
-			defer resp.Body.Close()
-
-			var jwks struct {
-				Keys []struct {
-					Kid string   `json:"kid"`
-					X5C []string `json:"x5c"`
-				} `json:"keys"`
-			}
-			if err := json.NewDecoder(resp.Body).Decode(&jwks); err != nil {
-				return nil, err
-			}
-
-			// Find the correct signing key
-			var signingKey interface{}
-			for _, key := range jwks.Keys {
-				if key.Kid == token.Header["kid"].(string) {
-					// Decode the key from base64
-					block, _ := pem.Decode([]byte(key.X5C[0]))
-					if block == nil {
-						return nil, fmt.Errorf("failed to parse PEM block containing the key")
-					}
-
-					cert, err := x509.ParseCertificate(block.Bytes)
-					if err != nil {
-						return nil, err
-					}
-
-					signingKey = cert.PublicKey
-					break
-				}
-			}
-
-			if signingKey == nil {
-				return nil, fmt.Errorf("signing key not found")
-			}
-
-			claims, ok := token.Claims.(jwt.MapClaims)
-			if !ok {
-				return nil, fmt.Errorf("invalid token claims")
-			}
-
-			// Validate the expiration time
-			if float64(time.Now().Unix()) > claims["exp"].(float64) {
-				return nil, fmt.Errorf("token is expired")
-			}
-
-			// Validate the issued at time
-			if float64(time.Now().Unix()) < claims["iat"].(float64) {
-				return nil, fmt.Errorf("token used before issued")
-			}
-
-			// Validate the not before time
-			if float64(time.Now().Unix()) < claims["nbf"].(float64) {
-				return nil, fmt.Errorf("token not yet valid")
-			}
-
-			// Validate the issuer
-			iss := token.Claims.(jwt.MapClaims)["iss"].(string)
-			if iss != fmt.Sprintf("https://login.microsoftonline.com/%s/v2.0", tenantID) {
-				return nil, fmt.Errorf("invalid issuer: %s", iss)
-			}
-
-			return signingKey, nil
-
-			//return jwtKey, nil
+			// Return the key we used to sign the token
+			return jwtKey, nil
 		})
+
+		if err != nil {
+			fmt.Printf("Token validation error: %v\n", err)
+			c.Redirect(http.StatusFound, "/login")
+			c.Abort()
+			return
+		}
+
+		if !token.Valid {
+			fmt.Println("Token is invalid")
+			c.Redirect(http.StatusFound, "/login")
+			c.Abort()
+			return
+		}
 
 		if err != nil || !token.Valid {
 			c.Redirect(http.StatusFound, "/login")
@@ -185,29 +140,35 @@ func JWTMiddleware() gin.HandlerFunc {
 		c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
 		c.Header("Pragma", "no-cache")
 		c.Header("Expires", "0")
-
 		// Get the user ID from the token claims
 		claims := token.Claims.(jwt.MapClaims)
 		userID := claims["sub"].(string)
-		localID := int64(claims["db_id"].(float64))
+		fmt.Println("claims", claims)
+		//localID := 1
+		localID := claims["localID"]
+		fmt.Println("localID", localID)
 
 		c.Set("userID", userID)
 		c.Set("localID", localID)
+		fmt.Println("userID", userID)
 		c.Next()
 	}
 }
 
-func CreateToken(externalUserID string, databaseUserID int64) (string, error) {
+func CreateToken(externalUserID string, localID int64) (string, error) {
+	fmt.Println("create token", localID)
 	expirationTime := time.Now().Add(1 * time.Hour)
 	claims := &models.Claims{
 		UserID:  externalUserID,
-		LocalId: databaseUserID,
+		LocalID: localID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
 		},
 	}
+
+	fmt.Println("claims", claims)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(jwtKey)
