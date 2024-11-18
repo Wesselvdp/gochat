@@ -60,6 +60,7 @@ ENV DB_PATH=/data/app.db
 # Expose port
 EXPOSE 8080
 
+
 # Add an entrypoint script to run migrations before starting the server
 COPY scripts/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
