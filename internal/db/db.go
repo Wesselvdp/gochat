@@ -6,10 +6,12 @@ import (
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
 	"gochat/internal/schema"
+	"os"
 )
 
 func Init() (*schema.Queries, *sql.DB, error) {
-	database, err := sql.Open("sqlite3", "database.db")
+	dbPath := os.Getenv("DB_PATH")
+	database, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to open database: %w", err)
 	}
