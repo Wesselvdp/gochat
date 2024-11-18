@@ -39,7 +39,7 @@ services:
         parallelism: 0
         order: stop-first
     volumes:
-      - ../files/sqlite:/data/app.db
+      - "../files/sqlite:/data/app.db"
 networks:
   dokploy-network:
     external: true
