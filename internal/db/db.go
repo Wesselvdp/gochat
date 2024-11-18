@@ -25,6 +25,6 @@ func Init() (*schema.Queries, *sql.DB, error) {
 			log.Fatal(err)
 		}
 	}
-	queries := schema.New(database)
+	queries := schema.New(db)
 	return queries, db, nil
 }
