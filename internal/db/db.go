@@ -3,28 +3,26 @@ package database
 import (
 	"database/sql"
 	_ "embed"
+	"fmt"
 	_ "github.com/mattn/go-sqlite3"
 	"gochat/internal/schema"
-	"log"
 	"os"
-	"path/filepath"
 )
 
 func Init() (*schema.Queries, *sql.DB, error) {
 	dbPath := os.Getenv("DB_PATH")
-	// When opening the database
-	db, err := sql.Open("sqlite3", dbPath)
+	database, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
-		// Ensure directory exists
-		if err := os.MkdirAll(filepath.Dir(dbPath), 0755); err != nil {
-			log.Fatal(err)
-		}
-		// Retry opening the database
-		db, err = sql.Open("sqlite3", os.Getenv("DB_PATH"))
-		if err != nil {
-			log.Fatal(err)
-		}
+		return nil, nil, fmt.Errorf("failed to open database: %w", err)
 	}
-	queries := schema.New(db)
-	return queries, db, nil
+
+	// create tables
+	//ctx := context.Background()
+	//_, err = database.ExecContext(ctx, ddl)
+	//if err != nil {
+	//	return nil, nil, fmt.Errorf("failed creating tables: %w", err)
+	//}
+
+	queries := schema.New(database)
+	return queries, database, nil
 }
