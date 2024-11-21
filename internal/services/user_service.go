@@ -4,25 +4,22 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/google/uuid"
 	database "gochat/internal/db"
 	"gochat/internal/schema"
-	"gochat/pkg/utils"
 )
 
-type User struct {
-	Name        string
-	Email       string
-	ExternalID  int64
-	ID          int64
-	account     string
-	CreatedAt   string
-	UpdatededAt string
+type UserCreate struct {
+	Name       *string
+	Email      string
+	ExternalID string
+	Account    *string
 }
 
 type UserSearchParams struct {
 }
 
-func getUser(id int64) (*schema.User, error) {
+func getUser(id string) (*schema.User, error) {
 	ctx := context.Background()
 	queries, _, err := database.Init()
 	if err != nil {
@@ -36,9 +33,10 @@ func getUser(id int64) (*schema.User, error) {
 	return &user, nil
 }
 
-func GetOrCreateUser(email string) (*User, error) {
-	var user *User
-	user, err := GetUserByEmail(email)
+func GetOrCreateUser(userData UserCreate) (*schema.User, error) {
+	var user *schema.User
+	fmt.Println("coming in:", userData.Email)
+	user, err := GetUserByEmail(userData.Email)
 
 	if err != nil {
 		return nil, err
@@ -49,7 +47,7 @@ func GetOrCreateUser(email string) (*User, error) {
 		return user, nil
 	}
 
-	user, err = CreateUser(User{Name: "James", Email: email})
+	user, err = CreateUser(userData)
 
 	if err != nil {
 		return nil, err
@@ -58,63 +56,57 @@ func GetOrCreateUser(email string) (*User, error) {
 	return user, nil
 }
 
-func GetUserByEmail(email string) (*User, error) {
+func GetUserByEmail(email string) (*schema.User, error) {
+
 	ctx := context.Background()
 	queries, _, err := database.Init()
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("Searching user by email", email)
+	user, err := queries.GetUserByEmail(ctx, email)
+	//
 
-	user, err := queries.GetUserByEmail(ctx, sql.NullString{String: email, Valid: true})
-
-	//if err != nil {
-	//	return nil, err
-	//}
-
-	if user.Email.String == "" {
-		return nil, nil
-	}
-	readableUser := User{
-		ID:          user.ID,
-		Name:        user.Name.String,
-		Email:       user.Email.String,
-		CreatedAt:   user.Createdat.String,
-		UpdatededAt: user.Updatedat.String,
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// Handle the "no rows" case explicitly
+			fmt.Println("No user found with the given email:", email)
+			return nil, nil // or return a custom error
+		}
+		// Handle other errors
+		fmt.Println("Error getting user by email:", err.Error())
+		return nil, fmt.Errorf("failed to fetch user by email: %w", err)
 	}
 
-	fmt.Println(readableUser)
-
-	//if err != nil {
-	//	return nil, err
-	//}
-	return &readableUser, nil
+	return &user, nil
 }
 
-func CreateUser(user User) (*User, error) {
-	fmt.Println("Creating new user")
-	now := utils.GetTime()
+func CreateUser(create UserCreate) (*schema.User, error) {
+	fmt.Println("Creating new user", create)
 	ctx := context.Background()
 	queries, _, err := database.Init()
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize database: %w", err)
 	}
 
-	newUser, err := queries.CreateUser(ctx, schema.CreateUserParams{
-		Name:      sql.NullString{String: user.Name, Valid: true},
-		Email:     sql.NullString{String: user.Email, Valid: true},
-		Updatedat: now,
-		Createdat: now,
-	})
+	user := schema.CreateUserParams{
+		ID:    uuid.New().String(),
+		Email: create.Email,
+		Name:  "", // default empty string
+	}
+
+	if create.Name != nil {
+		user.Name = *create.Name
+	}
+	if create.Account != nil {
+		user.Account = *create.Account
+	}
+
+	newUser, err := queries.CreateUser(ctx, user)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
-	user = User{
-		Name:  newUser.Name.String,
-		Email: newUser.Email.String,
-		ID:    newUser.ID,
-	}
-	return &user, nil
+	return &newUser, nil
 }

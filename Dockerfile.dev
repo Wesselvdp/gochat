@@ -1,0 +1,46 @@
+# Frontend build stage
+FROM node:20-alpine AS frontend-builder
+WORKDIR /app
+COPY views /views
+WORKDIR /app
+
+COPY frontend/package*.json ./
+COPY frontend/ ./
+RUN npm install
+RUN npm run build
+
+# Development stage
+FROM golang:1.23-alpine
+
+WORKDIR /app
+
+# Add build dependencies
+RUN apk add --no-cache gcc musl-dev sqlite ca-certificates
+
+# Install development tools
+RUN go install github.com/air-verse/air@latest
+RUN go install github.com/a-h/templ/cmd/templ@latest
+RUN go install -tags 'sqlite3' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+
+# Copy go mod files
+COPY go.* ./
+RUN go mod download
+
+# Copy frontend build
+COPY --from=frontend-builder /app/dist /frontend/dist
+
+# Create directory for SQLite database
+RUN mkdir -p /data
+RUN chmod 755 /data
+
+ENV DB_PATH=/data/database.db
+
+# Copy migrations
+COPY db/migrations /db/migrations
+COPY scripts/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+EXPOSE 8080
+
+# Use Air for development
+CMD ["air", "-c", ".air.toml"]

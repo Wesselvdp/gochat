@@ -9,18 +9,18 @@ import (
 )
 
 type Account struct {
-	ID        int64
-	Name      sql.NullString
-	Createdat sql.NullString
-	Updatedat sql.NullString
+	ID        string
+	Name      string
+	Createdat string
+	Updatedat string
 }
 
 type User struct {
-	ID         int64
-	Name       sql.NullString
-	Email      sql.NullString
-	Account    int64
+	ID         string
+	Name       string
+	Email      string
+	Account    string
 	Externalid sql.NullString
-	Createdat  sql.NullString
-	Updatedat  sql.NullString
+	Createdat  string
+	Updatedat  string
 }

@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS account (
-   id INTEGER PRIMARY KEY AUTOINCREMENT,
+   id TEXT PRIMARY KEY,
    name TEXT NOT NULL,
    createdAt TEXT NOT NULL DEFAULT (datetime('now')),
    updatedAt TEXT NOT NULL DEFAULT (datetime('now'))

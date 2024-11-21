@@ -32,10 +32,14 @@ func OAuthRedirectAzure(r *gin.Engine) gin.HandlerFunc {
 
 		// Get or create user in your database
 		externalID := userInfo["id"].(string)
-		email := userInfo["mail"].(string) // or userInfo["userPrincipalName"] for Azure AD
+		fmt.Println("userInfo!", userInfo)
+		user := services.UserCreate{
+			Email:      userInfo["mail"].(string),
+			ExternalID: userInfo["id"].(string),
+		}
 
-		savedUser, err := services.GetOrCreateUser(email)
-
+		savedUser, err := services.GetOrCreateUser(user)
+		fmt.Println("savedUser", savedUser)
 		if err != nil {
 			fmt.Println("Error getting user: " + err.Error())
 		}

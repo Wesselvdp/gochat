@@ -1,0 +1,1 @@
+DELETE FROM user WHERE externalId = '1234abcd';

@@ -1,10 +1,10 @@
 version: "2"
 sql:
-  - engine: "sqlc"
-    queries: "internal/db/queries.sql"
-    schema: "internal/db/schema.sql"
+  - engine: "sqlite"
+    queries: "queries.sql"
+    schema: "schema.sql"
     gen:
       go:
         package: "schema"
-        out: "internal/schema"
+        out: "../../internal/schema"
 

@@ -10,7 +10,7 @@ RUN npm install
 RUN npm run build
 
 # Build stage
-FROM golang:1.22-alpine AS builder
+FROM golang:1.23-alpine AS builder
 
 WORKDIR /app
 
@@ -55,7 +55,7 @@ RUN mkdir -p /data
 RUN chmod 755 /data
 
 # Set environment variable for database path
-ENV DB_PATH=/data/app.db
+ENV DB_PATH=/data/database.db
 
 # Expose port
 EXPOSE 8080

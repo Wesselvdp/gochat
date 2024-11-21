@@ -7,23 +7,22 @@ package schema
 
 import (
 	"context"
-	"database/sql"
 )
 
 const createAccount = `-- name: CreateAccount :one
 INSERT INTO account (
     id, name, updatedAt, createdAt
 ) VALUES (
-    ?, ?, ?, ?
-)
-RETURNING id, name, createdat, updatedat
+             ?, ?, ?, ?
+         )
+    RETURNING id, name, createdat, updatedat
 `
 
 type CreateAccountParams struct {
-	ID        int
-	Name      sql.NullString
-	Updatedat sql.NullString
-	Createdat sql.NullString
+	ID        string
+	Name      string
+	Updatedat string
+	Createdat string
 }
 
 func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error) {
@@ -45,23 +44,25 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (A
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO user (
-    email, name, account, updatedAt, createdAt
+   id, email, name, account, updatedAt, createdAt
 ) VALUES (
-    ?, ?, ?, ?, ?
-)
-RETURNING id, name, email, account, externalid, createdat, updatedat
+           ?,  ?, ?, ?, ?, ?
+         )
+    RETURNING id, name, email, account, externalid, createdat, updatedat
 `
 
 type CreateUserParams struct {
-	Email     sql.NullString
-	Name      sql.NullString
-	Account   int64
-	Updatedat sql.NullString
-	Createdat sql.NullString
+	ID        string
+	Email     string
+	Name      string
+	Account   string
+	Updatedat string
+	Createdat string
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
 	row := q.db.QueryRowContext(ctx, createUser,
+		arg.ID,
 		arg.Email,
 		arg.Name,
 		arg.Account,
@@ -86,7 +87,7 @@ DELETE FROM account
 WHERE id = ?
 `
 
-func (q *Queries) DeleteAccount(ctx context.Context, id int64) error {
+func (q *Queries) DeleteAccount(ctx context.Context, id string) error {
 	_, err := q.db.ExecContext(ctx, deleteAccount, id)
 	return err
 }
@@ -96,7 +97,7 @@ DELETE FROM user
 WHERE id = ?
 `
 
-func (q *Queries) DeleteUser(ctx context.Context, id int64) error {
+func (q *Queries) DeleteUser(ctx context.Context, id string) error {
 	_, err := q.db.ExecContext(ctx, deleteUser, id)
 	return err
 }
@@ -106,7 +107,7 @@ SELECT id, name, createdat, updatedat FROM account
 WHERE id = ? LIMIT 1
 `
 
-func (q *Queries) GetAccount(ctx context.Context, id int64) (Account, error) {
+func (q *Queries) GetAccount(ctx context.Context, id string) (Account, error) {
 	row := q.db.QueryRowContext(ctx, getAccount, id)
 	var i Account
 	err := row.Scan(
@@ -124,7 +125,7 @@ WHERE id = ? LIMIT 1
 `
 
 // Users
-func (q *Queries) GetUser(ctx context.Context, id int64) (User, error) {
+func (q *Queries) GetUser(ctx context.Context, id string) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUser, id)
 	var i User
 	err := row.Scan(
@@ -144,7 +145,7 @@ SELECT id, name, email, account, externalid, createdat, updatedat FROM user
 WHERE email = ? LIMIT 1
 `
 
-func (q *Queries) GetUserByEmail(ctx context.Context, email sql.NullString) (User, error) {
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
 	var i User
 	err := row.Scan(

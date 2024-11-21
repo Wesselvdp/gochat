@@ -155,7 +155,7 @@ func JWTMiddleware() gin.HandlerFunc {
 	}
 }
 
-func CreateToken(externalUserID string, localID int64) (string, error) {
+func CreateToken(externalUserID string, localID string) (string, error) {
 	fmt.Println("create token", localID)
 	expirationTime := time.Now().Add(1 * time.Hour)
 	claims := &models.Claims{

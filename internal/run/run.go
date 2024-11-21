@@ -62,8 +62,6 @@ func Run(ctx context.Context, w io.Writer, args []string) error {
 		log.Fatal(err)
 	}
 
-	log.Printf("listening on %s\n", *port)
-
 	srv := newServer()
 
 	httpServer := &http.Server{

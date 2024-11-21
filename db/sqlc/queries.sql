@@ -31,9 +31,9 @@ SELECT * FROM user;
 
 -- name: CreateUser :one
 INSERT INTO user (
-    email, name, account, updatedAt, createdAt
+   id, email, name, account, updatedAt, createdAt
 ) VALUES (
-             ?, ?, ?, ?, ?
+           ?,  ?, ?, ?, ?, ?
          )
     RETURNING *;
 
