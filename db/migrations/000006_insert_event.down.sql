@@ -1,0 +1,1 @@
+DELETE FROM event WHERE id = 99999;

@@ -40,3 +40,18 @@ INSERT INTO user (
 -- name: DeleteUser :exec
 DELETE FROM user
 WHERE id = ?;
+
+
+-- EVENTS
+
+-- name: CreateEvent :one
+INSERT INTO event (
+    user, event
+) VALUES (
+     ?, ?
+)
+RETURNING *;
+
+-- name: GetEvent :one
+SELECT * FROM event
+WHERE id = ? LIMIT 1;

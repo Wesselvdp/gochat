@@ -42,6 +42,34 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (A
 	return i, err
 }
 
+const createEvent = `-- name: CreateEvent :one
+
+INSERT INTO event (
+    user, event
+) VALUES (
+     ?, ?
+)
+RETURNING id, event, timestamp, user
+`
+
+type CreateEventParams struct {
+	User  string
+	Event string
+}
+
+// EVENTS
+func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (Event, error) {
+	row := q.db.QueryRowContext(ctx, createEvent, arg.User, arg.Event)
+	var i Event
+	err := row.Scan(
+		&i.ID,
+		&i.Event,
+		&i.Timestamp,
+		&i.User,
+	)
+	return i, err
+}
+
 const createUser = `-- name: CreateUser :one
 INSERT INTO user (
    id, email, name, account, updatedAt, createdAt
@@ -115,6 +143,23 @@ func (q *Queries) GetAccount(ctx context.Context, id string) (Account, error) {
 		&i.Name,
 		&i.Createdat,
 		&i.Updatedat,
+	)
+	return i, err
+}
+
+const getEvent = `-- name: GetEvent :one
+SELECT id, event, timestamp, user FROM event
+WHERE id = ? LIMIT 1
+`
+
+func (q *Queries) GetEvent(ctx context.Context, id int64) (Event, error) {
+	row := q.db.QueryRowContext(ctx, getEvent, id)
+	var i Event
+	err := row.Scan(
+		&i.ID,
+		&i.Event,
+		&i.Timestamp,
+		&i.User,
 	)
 	return i, err
 }

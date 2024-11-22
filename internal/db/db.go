@@ -11,17 +11,16 @@ import (
 
 func Init() (*schema.Queries, *sql.DB, error) {
 	dbPath := os.Getenv("DB_PATH")
+
+	if dbPath == "" {
+		return nil, nil, fmt.Errorf("DB_PATH environment variable not set")
+	}
+
 	database, err := sql.Open("sqlite3", dbPath)
+
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to open database: %w", err)
 	}
-
-	// create tables
-	//ctx := context.Background()
-	//_, err = database.ExecContext(ctx, ddl)
-	//if err != nil {
-	//	return nil, nil, fmt.Errorf("failed creating tables: %w", err)
-	//}
 
 	queries := schema.New(database)
 	return queries, database, nil

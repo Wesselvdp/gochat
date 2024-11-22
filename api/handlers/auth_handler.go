@@ -46,7 +46,6 @@ func OAuthRedirectAzure(r *gin.Engine) gin.HandlerFunc {
 
 		// Store user in context for this request
 		auth.SetUserCookie(c, savedUser.Email)
-		// ===
 
 		// Create a JWT
 		token, err := auth.CreateToken(externalID, savedUser.ID)
@@ -55,6 +54,10 @@ func OAuthRedirectAzure(r *gin.Engine) gin.HandlerFunc {
 			return
 		}
 		auth.SetTokenCookie(c, token)
+
+		// Track event
+		eventService := services.NewEventService(savedUser.ID)
+		eventService.Create(services.EventLogin)
 
 		c.Redirect(http.StatusMovedPermanently, "/")
 

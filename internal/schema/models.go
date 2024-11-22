@@ -15,6 +15,13 @@ type Account struct {
 	Updatedat string
 }
 
+type Event struct {
+	ID        int64
+	Event     string
+	Timestamp string
+	User      string
+}
+
 type User struct {
 	ID         string
 	Name       string

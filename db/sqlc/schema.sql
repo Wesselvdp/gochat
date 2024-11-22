@@ -18,3 +18,11 @@ CREATE TABLE IF NOT EXISTS account (
    updatedAt TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX idx_account_name ON account(name);
+
+CREATE TABLE IF NOT EXISTS event (
+     id INTEGER PRIMARY KEY AUTOINCREMENT,
+     event TEXT NOT NULL,
+     timestamp TEXT NOT NULL DEFAULT (datetime('now')),
+     user TEXT NOT NULL,
+     FOREIGN KEY (user) REFERENCES user(id)
+);
