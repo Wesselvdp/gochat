@@ -28,27 +28,28 @@ func OAuthRedirectAzure(r *gin.Engine) gin.HandlerFunc {
 			c.String(http.StatusInternalServerError, "Error getting user info: "+err.Error())
 		}
 
-		//==  handle local user
-
-		// Get or create user in your database
+		// Get or create user from database
 		externalID := userInfo["id"].(string)
-		fmt.Println("userInfo!", userInfo)
-		user := services.UserCreate{
+		name := userInfo["givenName"].(string)
+
+		user := services.UserParams{
 			Email:      userInfo["mail"].(string),
-			ExternalID: userInfo["id"].(string),
+			ExternalID: &externalID,
+			Name:       &name,
 		}
 
-		savedUser, err := services.GetOrCreateUser(user)
-		fmt.Println("savedUser", savedUser)
+		userService := services.NewUserService()
+		dbUser, err := userService.GetOrCreate(c, user)
+
 		if err != nil {
 			fmt.Println("Error getting user: " + err.Error())
 		}
 
 		// Store user in context for this request
-		auth.SetUserCookie(c, savedUser.Email)
+		//auth.SetUserCookie(c, dbUser.Email)
 
 		// Create a JWT
-		token, err := auth.CreateToken(externalID, savedUser.ID)
+		token, err := auth.CreateToken(externalID, dbUser.ID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create token"})
 			return
@@ -56,7 +57,7 @@ func OAuthRedirectAzure(r *gin.Engine) gin.HandlerFunc {
 		auth.SetTokenCookie(c, token)
 
 		// Track event
-		eventService := services.NewEventService(savedUser.ID)
+		eventService := services.NewEventService(dbUser.ID)
 		eventService.Create(services.EventLogin)
 
 		c.Redirect(http.StatusMovedPermanently, "/")

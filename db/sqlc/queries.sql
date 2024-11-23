@@ -2,6 +2,12 @@
 SELECT * FROM account
 WHERE id = ? LIMIT 1;
 
+-- name: GetAccountByDomain :one
+SELECT a.id
+FROM account a
+         JOIN account_domain ad ON a.id = ad.account
+WHERE ad.domain = ?;
+
 -- name: ListAccount :many
 SELECT * FROM account;
 
@@ -26,14 +32,18 @@ WHERE id = ? LIMIT 1;
 SELECT * FROM user
 WHERE email = ? LIMIT 1;
 
+-- name: GetUserByExternalID :one
+SELECT * FROM user
+WHERE externalId = ? LIMIT 1;
+
 -- name: ListUser :many
 SELECT * FROM user;
 
 -- name: CreateUser :one
 INSERT INTO user (
-   id, email, name, account, updatedAt, createdAt
+   id, email, externalId, name, account, updatedAt, createdAt
 ) VALUES (
-           ?,  ?, ?, ?, ?, ?
+           ?,  ?, ?, ?, ?, ?, ?
          )
     RETURNING *;
 
@@ -55,3 +65,4 @@ RETURNING *;
 -- name: GetEvent :one
 SELECT * FROM event
 WHERE id = ? LIMIT 1;
+

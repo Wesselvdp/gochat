@@ -7,106 +7,145 @@ import (
 	"github.com/google/uuid"
 	database "gochat/internal/db"
 	"gochat/internal/schema"
+	"gochat/pkg/utils"
+	"strings"
 )
 
-type UserCreate struct {
+type UserParams struct {
 	Name       *string
 	Email      string
-	ExternalID string
-	Account    *string
+	ExternalID *string
 }
 
 type UserSearchParams struct {
 }
 
-func getUser(id string) (*schema.User, error) {
-	ctx := context.Background()
-	queries, _, err := database.Init()
-	if err != nil {
-		return nil, err
-	}
-	user, err := queries.GetUser(ctx, id)
-
-	if err != nil {
-		return nil, err
-	}
-	return &user, nil
+type UserService struct {
+	queries *schema.Queries
 }
 
-func GetOrCreateUser(userData UserCreate) (*schema.User, error) {
-	var user *schema.User
-	fmt.Println("coming in:", userData.Email)
-	user, err := GetUserByEmail(userData.Email)
-
-	if err != nil {
-		return nil, err
+func getDomain(email string) (string, error) {
+	// Split the email address at the '@' symbol
+	parts := strings.Split(email, "@")
+	if len(parts) != 2 {
+		return "", fmt.Errorf("invalid email address: %s", email)
 	}
-
-	if user != nil {
-		fmt.Printf("User %v already exists\n", user.Email)
-		return user, nil
-	}
-
-	user, err = CreateUser(userData)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return user, nil
+	return parts[1], nil
 }
 
-func GetUserByEmail(email string) (*schema.User, error) {
-
-	ctx := context.Background()
+func NewUserService() *UserService {
 	queries, _, err := database.Init()
+	if err != nil {
+		fmt.Println("Error initializing queries for user service: " + err.Error())
+		return nil
+	}
+
+	return &UserService{queries: queries}
+}
+
+func (us *UserService) getAccountFromEmail(ctx context.Context, email string) (*string, error) {
+	domain, err := getDomain(email)
+
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("Searching user by email", email)
-	user, err := queries.GetUserByEmail(ctx, email)
-	//
+	accountID, err := us.queries.GetAccountByDomain(ctx, domain)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			// Handle the "no rows" case explicitly
-			fmt.Println("No user found with the given email:", email)
-			return nil, nil // or return a custom error
+			return nil, nil
 		}
-		// Handle other errors
-		fmt.Println("Error getting user by email:", err.Error())
-		return nil, fmt.Errorf("failed to fetch user by email: %w", err)
+		return nil, fmt.Errorf("failed to get account: %w", err)
 	}
 
-	return &user, nil
+	return &accountID, nil
 }
 
-func CreateUser(create UserCreate) (*schema.User, error) {
-	fmt.Println("Creating new user", create)
-	ctx := context.Background()
-	queries, _, err := database.Init()
+func (us *UserService) Create(ctx context.Context, params UserParams) (*schema.User, error) {
+	accountID, err := us.getAccountFromEmail(ctx, params.Email)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize database: %w", err)
+		fmt.Println("error getting account from email: " + err.Error())
+		return nil, fmt.Errorf("error getting account by domain: %s", err.Error())
+	}
+
+	if accountID == nil {
+		return nil, fmt.Errorf("Account not allowed")
 	}
 
 	user := schema.CreateUserParams{
-		ID:    uuid.New().String(),
-		Email: create.Email,
-		Name:  "", // default empty string
+		ID:      uuid.New().String(),
+		Email:   params.Email,
+		Account: *accountID,
 	}
 
-	if create.Name != nil {
-		user.Name = *create.Name
+	if params.Name != nil {
+		user.Name = utils.StringToNullString(*params.Name)
 	}
-	if create.Account != nil {
-		user.Account = *create.Account
+	if params.ExternalID != nil {
+		user.Externalid = utils.StringToNullString(*params.ExternalID)
 	}
 
-	newUser, err := queries.CreateUser(ctx, user)
+	newUser, err := us.queries.CreateUser(ctx, user)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
 	return &newUser, nil
+}
+
+func (us *UserService) Get(ctx context.Context, id string) (*schema.User, error) {
+	user, err := us.queries.GetUser(ctx, id)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	return &user, nil
+}
+
+//func (us *UserService) GetFromContext(ctx context.Context) (*schema.User, error) {
+//	ctx.Get()
+//}
+
+func (us *UserService) GetUserByEmail(ctx context.Context, email string) (*schema.User, error) {
+	userResponse, err := us.queries.GetUserByEmail(ctx, email)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// Handle the "no rows" case explicitly
+			return nil, nil
+		}
+		// Handle other errors
+		return nil, fmt.Errorf("failed to fetch user by email: %w", err)
+	}
+	return &userResponse, nil
+
+}
+
+func (us *UserService) GetOrCreate(ctx context.Context, params UserParams) (*schema.User, error) {
+	externalID := *params.ExternalID
+	var user *schema.User
+	// Until we have our own login
+	if externalID == "" {
+		return nil, fmt.Errorf("externalID is required")
+	}
+
+	userResponse, err := us.GetUserByEmail(ctx, params.Email)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user by email: %w", err)
+	}
+	if userResponse != nil {
+		return userResponse, nil
+	}
+
+	user, err = us.Create(ctx, params)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to create user: %w", err)
+	}
+
+	return user, nil
 }

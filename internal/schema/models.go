@@ -15,6 +15,11 @@ type Account struct {
 	Updatedat string
 }
 
+type AccountDomain struct {
+	Account string
+	Domain  string
+}
+
 type Event struct {
 	ID        int64
 	Event     string
@@ -24,7 +29,7 @@ type Event struct {
 
 type User struct {
 	ID         string
-	Name       string
+	Name       sql.NullString
 	Email      string
 	Account    string
 	Externalid sql.NullString

@@ -7,6 +7,7 @@ package schema
 
 import (
 	"context"
+	"database/sql"
 )
 
 const createAccount = `-- name: CreateAccount :one
@@ -72,26 +73,28 @@ func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (Event
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO user (
-   id, email, name, account, updatedAt, createdAt
+   id, email, externalId, name, account, updatedAt, createdAt
 ) VALUES (
-           ?,  ?, ?, ?, ?, ?
+           ?,  ?, ?, ?, ?, ?, ?
          )
     RETURNING id, name, email, account, externalid, createdat, updatedat
 `
 
 type CreateUserParams struct {
-	ID        string
-	Email     string
-	Name      string
-	Account   string
-	Updatedat string
-	Createdat string
+	ID         string
+	Email      string
+	Externalid sql.NullString
+	Name       sql.NullString
+	Account    string
+	Updatedat  string
+	Createdat  string
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
 	row := q.db.QueryRowContext(ctx, createUser,
 		arg.ID,
 		arg.Email,
+		arg.Externalid,
 		arg.Name,
 		arg.Account,
 		arg.Updatedat,
@@ -147,6 +150,20 @@ func (q *Queries) GetAccount(ctx context.Context, id string) (Account, error) {
 	return i, err
 }
 
+const getAccountByDomain = `-- name: GetAccountByDomain :one
+SELECT a.id
+FROM account a
+         JOIN account_domain ad ON a.id = ad.account
+WHERE ad.domain = ?
+`
+
+func (q *Queries) GetAccountByDomain(ctx context.Context, domain string) (string, error) {
+	row := q.db.QueryRowContext(ctx, getAccountByDomain, domain)
+	var id string
+	err := row.Scan(&id)
+	return id, err
+}
+
 const getEvent = `-- name: GetEvent :one
 SELECT id, event, timestamp, user FROM event
 WHERE id = ? LIMIT 1
@@ -192,6 +209,26 @@ WHERE email = ? LIMIT 1
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.Account,
+		&i.Externalid,
+		&i.Createdat,
+		&i.Updatedat,
+	)
+	return i, err
+}
+
+const getUserByExternalID = `-- name: GetUserByExternalID :one
+SELECT id, name, email, account, externalid, createdat, updatedat FROM user
+WHERE externalId = ? LIMIT 1
+`
+
+func (q *Queries) GetUserByExternalID(ctx context.Context, externalid sql.NullString) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByExternalID, externalid)
 	var i User
 	err := row.Scan(
 		&i.ID,

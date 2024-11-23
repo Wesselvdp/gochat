@@ -11,3 +11,11 @@ func GetTime() sql.NullString {
 		Valid:  true,
 	}
 }
+
+// Convert a string to sql.NullString
+func StringToNullString(s string) sql.NullString {
+	return sql.NullString{
+		String: s,
+		Valid:  s != "", // Valid is true if the string is not empty
+	}
+}

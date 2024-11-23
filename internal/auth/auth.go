@@ -143,12 +143,11 @@ func JWTMiddleware() gin.HandlerFunc {
 		// Get the user ID from the token claims
 		claims := token.Claims.(jwt.MapClaims)
 		userID := claims["sub"].(string)
-		fmt.Println("claims", claims)
+		fmt.Println("claims: ", claims)
 		//localID := 1
 		localID := claims["localID"]
-		fmt.Println("localID", localID)
 
-		c.Set("userID", userID)
+		//c.Set("userID", userID)
 		c.Set("localID", localID)
 		fmt.Println("userID", userID)
 		c.Next()
@@ -156,8 +155,7 @@ func JWTMiddleware() gin.HandlerFunc {
 }
 
 func CreateToken(externalUserID string, localID string) (string, error) {
-	fmt.Println("create token", localID)
-	expirationTime := time.Now().Add(1 * time.Hour)
+	expirationTime := time.Now().Add(86 * time.Hour)
 	claims := &models.Claims{
 		UserID:  externalUserID,
 		LocalID: localID,

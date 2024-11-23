@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS user (
     id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
+    name TEXT,
     email TEXT NOT NULL UNIQUE,
     account TEXT NOT NULL,
     externalId TEXT UNIQUE,

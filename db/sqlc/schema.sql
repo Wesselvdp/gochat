@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS user (
     id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
+    name TEXT,
     email TEXT NOT NULL UNIQUE,
     account TEXT PRIMARY KEY,
     externalId TEXT UNIQUE,
@@ -26,3 +26,11 @@ CREATE TABLE IF NOT EXISTS event (
      user TEXT NOT NULL,
      FOREIGN KEY (user) REFERENCES user(id)
 );
+
+CREATE TABLE IF NOT EXISTS account_domain (
+    account TEXT NOT NULL,
+    domain TEXT NOT NULL,
+    PRIMARY KEY (account, domain),
+    FOREIGN KEY (account) REFERENCES account(id)
+);
+
