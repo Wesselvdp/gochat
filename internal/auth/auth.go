@@ -43,21 +43,10 @@ func SetTokenCookie(c *gin.Context, token string) {
 	c.SetCookie(
 		"token",
 		token,
-		3600*24, // 1 day
+		3600*100,
 		"/",
 		domain, // Change this to your domain
-		false,  // Set to true if using HTTPS
-		true,
-	)
-}
-func SetUserCookie(c *gin.Context, email string) {
-	c.SetCookie(
-		"email",
-		email,
-		3600*24, // 1 day
-		"/",
-		domain, // Change this to your domain
-		false,  // Set to true if using HTTPS
+		true,   // Set to true if using HTTPS
 		true,
 	)
 }
@@ -74,26 +63,7 @@ func UnsetTokenCookie(c *gin.Context) {
 	)
 }
 
-// GetUser helper function to get user from context
-func GetUser(c *gin.Context) int64 {
-	user, exists := c.Get("localID")
-	if !exists {
-		fmt.Println("user not found in context")
-		return 0
-	}
-
-	// Type assertion to check if the underlying type is an integer
-	userID, ok := user.(int)
-	if !ok {
-		fmt.Println("user ID is not an integer")
-		return 0 // Or handle the error differently, e.g., return an error value
-	}
-
-	return int64(userID)
-}
-
-// Todo move to upper scope
-var jwtKey = []byte("MY_S4crEt_k4y")
+var jwtKey = []byte(os.Getenv("JWT_SECURITY_TOKEN"))
 
 func JWTMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -140,33 +110,25 @@ func JWTMiddleware() gin.HandlerFunc {
 		c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
 		c.Header("Pragma", "no-cache")
 		c.Header("Expires", "0")
+
 		// Get the user ID from the token claims
 		claims := token.Claims.(jwt.MapClaims)
-		userID := claims["sub"].(string)
-		fmt.Println("claims: ", claims)
-		//localID := 1
-		localID := claims["localID"]
+		c.Set("user", claims["sub"])
 
-		//c.Set("userID", userID)
-		c.Set("localID", localID)
-		fmt.Println("userID", userID)
 		c.Next()
 	}
 }
 
-func CreateToken(externalUserID string, localID string) (string, error) {
+func CreateToken(userID string) (string, error) {
 	expirationTime := time.Now().Add(86 * time.Hour)
 	claims := &models.Claims{
-		UserID:  externalUserID,
-		LocalID: localID,
+		UserID: userID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
 		},
 	}
-
-	fmt.Println("claims", claims)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(jwtKey)

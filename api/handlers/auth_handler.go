@@ -45,11 +45,8 @@ func OAuthRedirectAzure(r *gin.Engine) gin.HandlerFunc {
 			fmt.Println("Error getting user: " + err.Error())
 		}
 
-		// Store user in context for this request
-		//auth.SetUserCookie(c, dbUser.Email)
-
 		// Create a JWT
-		token, err := auth.CreateToken(externalID, dbUser.ID)
+		token, err := auth.CreateToken(dbUser.ID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not create token"})
 			return
