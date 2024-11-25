@@ -69,7 +69,7 @@ func (us *UserService) Create(ctx context.Context, params UserParams) (*schema.U
 	}
 
 	if accountID == nil {
-		return nil, fmt.Errorf("Account not allowed")
+		return nil, fmt.Errorf("Hi there, it seems your organisation has no active subscription. If you like access, please contact wessel@torgon.io")
 	}
 
 	user := schema.CreateUserParams{

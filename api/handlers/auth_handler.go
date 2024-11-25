@@ -42,7 +42,8 @@ func OAuthRedirectAzure(r *gin.Engine) gin.HandlerFunc {
 		dbUser, err := userService.GetOrCreate(c, user)
 
 		if err != nil {
-			fmt.Println("Error getting user: " + err.Error())
+			fmt.Println("Error creating user: " + err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 
 		// Create a JWT
