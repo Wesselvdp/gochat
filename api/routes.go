@@ -78,10 +78,8 @@ func AddRoutes(r *gin.Engine) {
 		protected.POST("send-message", afterRequestMiddleware, handlers.SendMessageHandler())
 
 	}
+
 	r.POST("file/upload", handlers.FileUploadHandler())
 	r.GET("rag/query", handlers.RagQueryHandler())
-	// Analysis
-
-	//r.GET("/login", handlers.LoginPageHandler(sm))
 
 }
