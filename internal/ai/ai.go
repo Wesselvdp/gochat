@@ -25,6 +25,10 @@ func GetCompletion(messages []openai.ChatCompletionMessage) (string, error) {
 		},
 	}
 
+	for _, message := range messages {
+		fmt.Printf("%+v\n", message)
+	}
+
 	client := openai.NewClientWithConfig(config)
 	resp, err := client.CreateChatCompletion(
 		context.Background(),

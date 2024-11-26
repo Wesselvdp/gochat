@@ -27,6 +27,14 @@ type Event struct {
 	User      string
 }
 
+type File struct {
+	ID        string
+	Name      string
+	Createdat string
+	Updatedat string
+	Owner     string
+}
+
 type User struct {
 	ID         string
 	Name       sql.NullString

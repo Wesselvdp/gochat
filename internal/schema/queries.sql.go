@@ -71,6 +71,35 @@ func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (Event
 	return i, err
 }
 
+const createFile = `-- name: CreateFile :one
+INSERT INTO file (
+    id, name, owner
+) VALUES (
+ ?, ?, ?
+ )
+RETURNING id, name, createdat, updatedat, owner
+`
+
+type CreateFileParams struct {
+	ID    string
+	Name  string
+	Owner string
+}
+
+// FILES
+func (q *Queries) CreateFile(ctx context.Context, arg CreateFileParams) (File, error) {
+	row := q.db.QueryRowContext(ctx, createFile, arg.ID, arg.Name, arg.Owner)
+	var i File
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Createdat,
+		&i.Updatedat,
+		&i.Owner,
+	)
+	return i, err
+}
+
 const createUser = `-- name: CreateUser :one
 INSERT INTO user (
    id, email, externalId, name, account, updatedAt, createdAt

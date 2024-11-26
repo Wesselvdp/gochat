@@ -66,3 +66,17 @@ RETURNING *;
 SELECT * FROM event
 WHERE id = ? LIMIT 1;
 
+
+-- FILES
+-- name: CreateFile :one
+INSERT INTO file (
+    id, name, owner
+) VALUES (
+ ?, ?, ?
+ )
+RETURNING *;
+
+-- name: GetFile :one
+SELECT * FROM file
+WHERE id = ? LIMIT 1;
+

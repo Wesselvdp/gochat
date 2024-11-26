@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"github.com/a-h/templ"
@@ -10,12 +9,12 @@ import (
 	"gochat/internal/ai"
 	"gochat/internal/auth"
 	"gochat/internal/rag"
+	"gochat/internal/services"
 	views "gochat/views"
 	"gochat/views/components"
-	"io"
+	"log"
 	"mime/multipart"
 	"net/http"
-	"path/filepath"
 	"time"
 )
 
@@ -25,6 +24,7 @@ type Config struct {
 
 type UserRequestData struct {
 	Messages []openai.ChatCompletionMessage `json:"messages"`
+	Files    []string                       `json:"files"`
 }
 
 const appTimeout = time.Second * 10
@@ -83,7 +83,49 @@ func SendMessageHandler() gin.HandlerFunc {
 			return
 		}
 
-		aiResponse, err := ai.GetCompletion(data.Messages)
+		// If files exist, do vector search and augment messages
+		var augmentedMessages []openai.ChatCompletionMessage
+		if len(data.Files) > 0 {
+			fmt.Printf("FILES!")
+			// Retrieve relevant document chunks based on files
+			lastMessage := data.Messages[len(data.Messages)-1]
+			documentContext, err := rag.Query(ctx, lastMessage.Content, data.Files)
+			fmt.Println("documentContext", documentContext)
+			if err != nil {
+				// Log error but don't fail the request
+				log.Printf("Document context retrieval error: %v", err)
+			}
+
+			// Create augmented messages with document context
+			augmentedMessages = append(data.Messages[:len(data.Messages)-1], []openai.ChatCompletionMessage{
+				{
+					Role: "system",
+					Content: `You are an AI assistant tasked with answering questions STRICTLY based on the provided document context.
+
+				IMPORTANT RULES:
+				- If document context is provided, you MUST use ONLY the information from that context to answer.
+				- Do NOT use any external or general knowledge when context is present.
+				- Directly quote from the context when possible.`,
+				},
+				{
+					Role:    "system",
+					Content: "If document context is provided below, use it to answer questions. If no context is provided or the context isn't relevant, respond based on your general knowledge.",
+				},
+				{
+					Role:    "system",
+					Content: documentContext, // Retrieved document chunks
+				},
+				lastMessage,
+			}...)
+
+		} else {
+			// No files, use original messages
+			augmentedMessages = data.Messages
+		}
+		//for _, message := range augmentedMessages {
+		//	fmt.Printf("%+v\n", message)
+		//}
+		aiResponse, err := ai.GetCompletion(augmentedMessages)
 
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{"content": "Oeps, er is iets mis. We sturen er een ontwikkelaar op af"})
@@ -91,7 +133,7 @@ func SendMessageHandler() gin.HandlerFunc {
 			//fmt.Println(aiResponse)
 			response := gin.H{
 				"content": aiResponse,
-				"data":    data.Messages,
+				"data":    augmentedMessages,
 			}
 			ctx.JSON(http.StatusOK, response)
 
@@ -123,59 +165,13 @@ func handlePDFFile(file *multipart.FileHeader) {
 	fmt.Printf("Processing PDF file: %s\n", file.Filename)
 }
 
-func GetTextFromFile(file *multipart.FileHeader) (string, error) {
-	// Open the file
-	src, err := file.Open()
-	if err != nil {
-		return "", fmt.Errorf("error opening file: %v", err)
-	}
-	defer src.Close()
-
-	// Read the content
-	content := ""
-	reader := bufio.NewReader(src)
-	buffer := make([]byte, 1024)
-	for {
-		n, err := reader.Read(buffer)
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return "", fmt.Errorf("error reading file: %v", err)
-		}
-		content += string(buffer[:n])
-	}
-	return content, nil
-}
-
-func handleTXTFile(ctx context.Context, file *multipart.FileHeader) {
-	// Add your TXT processing logic here
-	fmt.Printf("Processing TXT file: %s\n", file.Filename)
-	content, err := GetTextFromFile(file)
-	if err != nil {
-		fmt.Printf("Error processing TXT file: %v\n", err)
-	}
-
-	if err != nil {
-		fmt.Printf("Error processing TXT file: %v\n", err)
-	}
-
-	err = rag.SaveEmbedding(ctx, content)
-	if err != nil {
-		fmt.Printf("Error processing TXT file: %v\n", err)
-	}
-	fmt.Printf("Processed TXT file: %s\n", file.Filename)
-	//fmt.Println("embeddings:", embeddings)
-
-}
-
 func RagQueryHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		queryEmbedding, err := ai.GetEmbedding("Who is elara?")
 		if err != nil {
 			fmt.Printf("Error getting embedding: %v\n", err)
 		}
-		searchResult, err := rag.SearchSimilarChunks(c, queryEmbedding, 2)
+		searchResult, err := rag.SearchSimilarChunks(c, queryEmbedding, []string{"d3656eab_1230_432d_8096_14829e1e801c"}, 2)
 		if err != nil {
 			fmt.Printf("Error getting embedding: %v\n", err)
 		}
@@ -193,26 +189,26 @@ func FileUploadHandler() gin.HandlerFunc {
 			})
 			return
 		}
+		// Save file entry locally
+		fileService, err := services.NewFileService(c)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		}
+		dbEntry, err := fileService.Create(c, file.Filename)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		}
+		fileID := dbEntry.ID
 
-		// Get the file extension
-		ext := filepath.Ext(file.Filename)
-
-		// Process file based on type
-		switch ext {
-		case ".pdf":
-			handlePDFFile(file)
-		case ".txt":
-			handleTXTFile(c, file)
-		default:
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Unsupported file type",
-			})
-			return
+		// Create embeddings and save to vector DB
+		err = rag.HandleFileEmbedding(c, file, fileID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		}
 
 		c.JSON(http.StatusOK, gin.H{
 			"message": fmt.Sprintf("File %s uploaded successfully", file.Filename),
-			"type":    ext,
+			"id":      fileID,
 		})
 	}
 

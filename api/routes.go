@@ -76,10 +76,8 @@ func AddRoutes(r *gin.Engine) {
 		protected.GET("c/:id", handlers.ChatPageHandler())
 		protected.GET("component/:componentName", handlers.ComponentHandler())
 		protected.POST("send-message", afterRequestMiddleware, handlers.SendMessageHandler())
-
+		protected.POST("file/upload", handlers.FileUploadHandler())
+		protected.GET("rag/query", handlers.RagQueryHandler())
 	}
-
-	r.POST("file/upload", handlers.FileUploadHandler())
-	r.GET("rag/query", handlers.RagQueryHandler())
 
 }

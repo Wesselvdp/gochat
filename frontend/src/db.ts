@@ -9,10 +9,16 @@ export type Message = ChatCompletionMessageParam & {
   timestamp: number;
 }
 
-export type SavedConversation  = {
+export type FileEntry = {
+  id: string;
+  name: string;
+}
+
+export type SavedConversation = {
   title: string;
   id: string;
   date: Date;
+  files: FileEntry[]
 };
 
 interface MyDB extends DBSchema {
@@ -49,12 +55,13 @@ async function init() {
 }
 
 // Create conversation
-export async function createConversation(id: string, name: string) {
+export async function createConversation(id: string) {
   const db = await init();
   const value = {
     id,
     date: new Date('2019-01-01'),
-    title: "Nieuw gesprek"
+    title: "Nieuw gesprek",
+    files: []
   }
 
   await db.add('conversations', value);

@@ -8,15 +8,27 @@ class Conversation {
     id
     data
     messages
+    files: string[]
 
     constructor(c: SavedConversation, messages: Message[]) {
         this.id = c.id
         this.data = c
         this.messages = messages
+        this.files = []
     }
 
     async getAllConversations() {
         return db.conversation.list()
+    }
+
+    async addFile(file: File) {
+        const data = await axios.post(`/file/upload`, file, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        })
+
+        console.log({data})
     }
 
     getMessages() {
@@ -73,10 +85,15 @@ class Conversation {
         this.setLoading(true)
 
         // Get past messages
-        const messages = await (window as any).goChat.conversation.getMessages()
+        const messages = await this.getMessages()
         const openMessages = messages.map((m: Message) => ({role: m.role, content: m.content}))
+        const contextMessages = openMessages.slice(-5)
 
-        const res = await axios.post(`/send-message`, {messages: openMessages})
+        // get files
+        const conv = await db.conversation.get(this.id)
+        const files = conv?.files.map(f => f.id)
+
+        const res = await axios.post(`/send-message`, {messages: contextMessages, files})
         // if(res.status === 200) {
             const savedAssistantMessage = await db.messages.create(this.id, {role: 'assistant', content: res.data.content})
         this.setLoading(false)
@@ -100,6 +117,29 @@ class Conversation {
         await db.conversation.delete(this.id)
     }
 
+    uploadFile(file: File) {
+        uploadFile(file, this.id)
+    }
+}
+
+export async function uploadFile(file: File, conversationId: string) {
+    const { data } = await axios.post(`/file/upload`, { file }, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    })
+    const fileId = data.id
+
+    const conv = await db.conversation.get(conversationId)
+    if(!conv) return;
+    await db.conversation.update({...conv, files: [...conv.files, {id: fileId, name: file.name}]})
+
+}
+
+export async function createInStorage() {
+    const id  = nanoid()
+    db.conversation.create(id)
+    return id;
 }
 
 export async function createConversation(content: string) {
@@ -107,7 +147,7 @@ export async function createConversation(content: string) {
 
     // Run independent database operations concurrently
     const [conversation, message] = await Promise.all([
-        db.conversation.create(id, content),
+        db.conversation.create(id),
         db.messages.create(id, {role: 'user', content})
     ]);
 
@@ -120,9 +160,10 @@ async function getCompletion(messages: ChatCompletionMessageParam[]): Promise<st
         return res.data.content
     } catch (err) {
         console.log(err)
-        return 'oops'
+        return "Oeps, er is iets mis. We sturen er een ontwikkelaar op af"
     }
 }
+
 
 
 
