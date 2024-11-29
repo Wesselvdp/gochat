@@ -4,3 +4,8 @@ scp root@142.93.224.213:/etc/dokploy/compose/gochat-app-staging-bd0bf7/files/sql
 scp ./local_db.sqlite root@142.93.224.213:/etc/dokploy/compose/gochat-app-staging-bd0bf7/files/sqlite/database.db
 # Remote backup
 ssh root@142.93.224.213 "cp /etc/dokploy/compose/gochat-app-staging-bd0bf7/files/sqlite/database.db /etc/dokploy/compose/gochat-app-staging-bd0bf7/files/sqlite/database.db.backup"
+
+curl https://cqzqss48xndt4b-11434.proxy.runpod.net/api/generate -d '{
+    "model": "gemma2:27b",
+    "prompt": "Why is the sky blue?"
+}'

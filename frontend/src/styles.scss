@@ -19,6 +19,10 @@ body {
   padding: 0.5em 1em;
 }
 
+textarea {
+  resize: none;
+}
+
 .kwizLogo {
   width: 35px;
   background-size: cover;

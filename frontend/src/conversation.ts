@@ -91,9 +91,9 @@ class Conversation {
 
         // get files
         const conv = await db.conversation.get(this.id)
-        const files = conv?.files.map(f => f.id)
+        const hasFiles = !!conv?.files.map(f => f.id).length
 
-        const res = await axios.post(`/send-message`, {messages: contextMessages, files})
+        const res = await axios.post(`/send-message`, {messages: contextMessages, conversationId: this.id, hasFiles})
         // if(res.status === 200) {
             const savedAssistantMessage = await db.messages.create(this.id, {role: 'assistant', content: res.data.content})
         this.setLoading(false)
@@ -123,17 +123,39 @@ class Conversation {
 }
 
 export async function uploadFile(file: File, conversationId: string) {
-    const { data } = await axios.post(`/file/upload`, { file }, {
+    console.log({conversationId})
+    if(!file) {
+        return new Error("missing param file")
+    }
+    if(!conversationId) {
+        return new Error("missing param conversationId")
+    }
+    const { data } = await axios.post(`/file/upload`, { file, conversationId }, {
         headers: {
             'Content-Type': 'multipart/form-data'
         }
     })
     const fileId = data.id
 
+    // Todo, maybe we're doing too much here
     const conv = await db.conversation.get(conversationId)
-    if(!conv) return;
+    console.log({conv})
+    if(!conv) return null
     await db.conversation.update({...conv, files: [...conv.files, {id: fileId, name: file.name}]})
 
+    return fileId
+}
+
+export async function removeFile(fileId: string, conversationId: string) {
+    const { data } = await axios.post(`/file/delete`, { fileId, conversationId }, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    })
+
+    const conv = await db.conversation.get(conversationId)
+    if(!conv) return;
+    await db.conversation.update({...conv, files: [...conv.files.filter(f => f.id !== fileId)]})
 }
 
 export async function createInStorage() {
@@ -142,15 +164,8 @@ export async function createInStorage() {
     return id;
 }
 
-export async function createConversation(content: string) {
-    const id  = nanoid()
-
-    // Run independent database operations concurrently
-    const [conversation, message] = await Promise.all([
-        db.conversation.create(id),
-        db.messages.create(id, {role: 'user', content})
-    ]);
-
+export async function createConversation(content: string, id: string) {
+    await db.messages.create(id, {role: 'user', content})
     window.location.href = window.location.origin + `/c/${id}`
 }
 

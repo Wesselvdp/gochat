@@ -77,7 +77,7 @@ func AddRoutes(r *gin.Engine) {
 		protected.GET("component/:componentName", handlers.ComponentHandler())
 		protected.POST("send-message", afterRequestMiddleware, handlers.SendMessageHandler())
 		protected.POST("file/upload", handlers.FileUploadHandler())
-		protected.GET("rag/query", handlers.RagQueryHandler())
+		protected.POST("file/delete", handlers.FileDeleteHandler())
 	}
 
 }

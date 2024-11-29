@@ -1,10 +1,15 @@
 import "./styles.scss";
-import {initConversation, createConversation} from "./conversation";
+import {initConversation} from "./conversation";
 import './components'
 import db from "./db";
 import './htmx-openai'
 // Make the function available on the window object
 import { initSentry } from './sentry';
+import './components/conversationFiles'
+import './components/userInputForm'
+import './components/textArea'
+import './svg/icon'
+import './svg/iconPaperclip'
 
 
 
@@ -26,7 +31,7 @@ const recentConversations = {
         })
     },
 };
-(window as any).goChat = { initConversation, recentConversations, createConversation };
+(window as any).goChat = { initConversation, recentConversations };
 
 (async () => {
    recentConversations.init()

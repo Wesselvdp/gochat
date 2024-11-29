@@ -101,7 +101,8 @@ templ Chat(id string) {
 		<form
 			class="max-w-3xl mx-auto w-full"
 		>
-			<text-area class="w-full"></text-area>
+			// <text-area class="w-full"></text-area>
+			<user-input-form conversationId={ id }></user-input-form>
 		</form>
 	</div>
 }

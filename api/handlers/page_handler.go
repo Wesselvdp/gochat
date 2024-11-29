@@ -13,7 +13,6 @@ import (
 	views "gochat/views"
 	"gochat/views/components"
 	"log"
-	"mime/multipart"
 	"net/http"
 	"time"
 )
@@ -23,8 +22,9 @@ type Config struct {
 }
 
 type UserRequestData struct {
-	Messages []openai.ChatCompletionMessage `json:"messages"`
-	Files    []string                       `json:"files"`
+	Messages       []openai.ChatCompletionMessage `json:"messages"`
+	HasFiles       bool                           `json:"hasFiles"`
+	ConversationID string                         `json:"conversationId"`
 }
 
 const appTimeout = time.Second * 10
@@ -85,11 +85,11 @@ func SendMessageHandler() gin.HandlerFunc {
 
 		// If files exist, do vector search and augment messages
 		var augmentedMessages []openai.ChatCompletionMessage
-		if len(data.Files) > 0 {
+		if data.HasFiles {
 			fmt.Printf("FILES!")
 			// Retrieve relevant document chunks based on files
 			lastMessage := data.Messages[len(data.Messages)-1]
-			documentContext, err := rag.Query(ctx, lastMessage.Content, data.Files)
+			documentContext, err := rag.Query(ctx, lastMessage.Content, data.ConversationID)
 			fmt.Println("documentContext", documentContext)
 			if err != nil {
 				// Log error but don't fail the request
@@ -160,29 +160,15 @@ func ChatPageHandler() gin.HandlerFunc {
 	}
 }
 
-func handlePDFFile(file *multipart.FileHeader) {
-	// Add your PDF processing logic here
-	fmt.Printf("Processing PDF file: %s\n", file.Filename)
-}
-
-func RagQueryHandler() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		queryEmbedding, err := ai.GetEmbedding("Who is elara?")
-		if err != nil {
-			fmt.Printf("Error getting embedding: %v\n", err)
-		}
-		searchResult, err := rag.SearchSimilarChunks(c, queryEmbedding, []string{"d3656eab_1230_432d_8096_14829e1e801c"}, 2)
-		if err != nil {
-			fmt.Printf("Error getting embedding: %v\n", err)
-		}
-		fmt.Printf("Search result: %v\n", searchResult)
-	}
-}
-
 func FileUploadHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
+
+		// Get conversationId from form data
+		conversationID := c.PostForm("conversationId")
+		fmt.Println("conversationID:", conversationID)
 		// Get file from form data
 		file, err := c.FormFile("file")
+
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": "No file uploaded",
@@ -201,9 +187,10 @@ func FileUploadHandler() gin.HandlerFunc {
 		fileID := dbEntry.ID
 
 		// Create embeddings and save to vector DB
-		err = rag.HandleFileEmbedding(c, file, fileID)
+		err = rag.HandleFileEmbedding(c, file, fileID, conversationID)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
 		}
 
 		c.JSON(http.StatusOK, gin.H{
@@ -213,8 +200,24 @@ func FileUploadHandler() gin.HandlerFunc {
 	}
 
 }
+func FileDeleteHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
 
-//curl https://cqzqss48xndt4b-11434.proxy.runpod.net/api/embeddings -d '{
-//"model": "mxbai-embed-large",
-//"prompt": "Llamas are members of the camelid family"
-//}'
+		// Get conversationId from form data
+		conversationID := c.PostForm("conversationId")
+		fileID := c.PostForm("fileId")
+
+		// Get file from form data
+		// Save file entry locally
+		err := rag.RemoveDocumentsByFileId(c, fileID, conversationID)
+
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"message": fmt.Sprintf("File %s successfully deleted", fileID),
+		})
+	}
+
+}

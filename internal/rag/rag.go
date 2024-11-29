@@ -11,6 +11,7 @@ import (
 	"mime/multipart"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 type TextExtractor func(*multipart.FileHeader) (string, error)
@@ -20,9 +21,10 @@ var extractors = map[string]TextExtractor{
 }
 
 const (
-	milvusAddr     = `localhost:19530`
-	collectionName = `documents`
-	dim            = 1024
+	milvusAddr         = `localhost:19530`
+	collectionName     = `documents`
+	dim                = 1024
+	relevanceThreshold = 0.5
 )
 
 type Document struct {
@@ -41,7 +43,7 @@ type SearchResult struct {
 
 func CreateChunkDocuments(text string, fileID string) ([]Document, error) {
 	// Define chunk size and overlap (adjust as needed)
-	chunkSize := 200
+	chunkSize := 400
 	overlap := 50
 	//var chunks []string
 	start := 0
@@ -72,13 +74,27 @@ func CreateChunkDocuments(text string, fileID string) ([]Document, error) {
 	return docs, nil
 }
 
-func SaveDocuments(ctx context.Context, docs []Document, fileID string) error {
+// SaveDocuments Saves new documents to the Vector DB's conversation partition
+func SaveDocuments(ctx context.Context, docs []Document, fileID string, conversationID string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 	milvusClient, err := client.NewClient(ctx, client.Config{
-		Address: milvusAddr,
+		Address:        milvusAddr,
+		Username:       "",
+		Password:       "",
+		DBName:         "",
+		Identifier:     "",
+		EnableTLSAuth:  false,
+		APIKey:         "",
+		ServerVersion:  "",
+		DialOptions:    nil,
+		RetryRateLimit: nil,
+		DisableConn:    false,
 	})
 	if err != nil {
 		// handling error and exit, to make example simple here
-		log.Fatal("failed to connect to milvus:", err.Error())
+		fmt.Println("NewClient error:", err.Error())
+		return err
 	}
 
 	// Prepare the data columns
@@ -95,7 +111,7 @@ func SaveDocuments(ctx context.Context, docs []Document, fileID string) error {
 		ids[i] = fileID
 	}
 
-	partitionName := strings.ReplaceAll(fileID, "-", "_")
+	partitionName := conversationID
 
 	err = milvusClient.CreatePartition(ctx, collectionName, partitionName)
 	if err != nil {
@@ -131,10 +147,44 @@ func SaveDocuments(ctx context.Context, docs []Document, fileID string) error {
 	return nil
 }
 
+func RemoveDocumentsByFileId(ctx context.Context, fileID string, conversationID string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	milvusClient, err := client.NewClient(ctx, client.Config{
+		Address:        milvusAddr,
+		Username:       "",
+		Password:       "",
+		DBName:         "",
+		Identifier:     "",
+		EnableTLSAuth:  false,
+		APIKey:         "",
+		ServerVersion:  "",
+		DialOptions:    nil,
+		RetryRateLimit: nil,
+		DisableConn:    false,
+	})
+
+	if err != nil {
+		// handling error and exit, to make example simple here
+		fmt.Println("NewClient error:", err.Error())
+		return err
+	}
+
+	expr := fmt.Sprintf("fileId == \"%s\"", fileID)
+
+	err = milvusClient.Delete(ctx, collectionName, conversationID, expr)
+	if err != nil {
+		fmt.Println("Delete err:", err.Error())
+		return err
+	}
+
+	return nil
+}
+
 func SearchSimilarChunks(
 	ctx context.Context,
 	queryEmbedding []float32,
-	fileIDs []string,
+	conversationID string,
 	topK int64,
 ) ([]SearchResult, error) {
 	milvusClient, err := client.NewClient(ctx, client.Config{
@@ -158,17 +208,11 @@ func SearchSimilarChunks(
 		entity.FloatVector(queryEmbedding),
 	}
 
-	partitions := make([]string, len(fileIDs))
-	for i, fileID := range fileIDs {
-		partitions[i] = strings.ReplaceAll(fileID, "-", "_")
-	}
-	fmt.Printf("partitions: %v\n", partitions)
-
 	// Now also retrieving chunk_index
 	searchResult, err := milvusClient.Search(
 		ctx,
 		collectionName,
-		partitions,
+		[]string{conversationID},
 		"",
 		[]string{"text"},
 		vectors,
@@ -190,6 +234,15 @@ func SearchSimilarChunks(
 
 	for i := 0; i < len(searchResult); i++ {
 		current := searchResult[i]
+
+		// Filter chunks based on relevance threshold
+		// Note: For L2 distance, lower scores indicate higher similarity
+		// So we want scores below the threshold
+		if current.Scores[i] > relevanceThreshold {
+			fmt.Println("OUT:", current.Scores[i])
+			continue // Skip this chunk if it's not relevant enough
+		}
+
 		text, err := current.Fields.GetColumn("text").GetAsString(i)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get text: %w", err)
@@ -204,7 +257,7 @@ func SearchSimilarChunks(
 	return results, nil
 }
 
-func HandleFileEmbedding(ctx context.Context, file *multipart.FileHeader, fileID string) error {
+func HandleFileEmbedding(ctx context.Context, file *multipart.FileHeader, fileID string, conversationID string) error {
 	ext := filepath.Ext(file.Filename)
 
 	extractor, exists := extractors[ext]
@@ -218,7 +271,11 @@ func HandleFileEmbedding(ctx context.Context, file *multipart.FileHeader, fileID
 	}
 
 	docs, err := CreateChunkDocuments(extractedText, fileID)
-	err = SaveDocuments(ctx, docs, fileID)
+	err = SaveDocuments(ctx, docs, fileID, conversationID)
+
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -261,12 +318,12 @@ func formatSearchResultsToMarkdown(results []SearchResult) string {
 	return formattedContext.String()
 }
 
-func Query(ctx context.Context, query string, fileIDs []string) (string, error) {
+func Query(ctx context.Context, query string, conversationID string) (string, error) {
 	queryEmbedding, err := ai.GetEmbedding(query)
 	if err != nil {
 		return "", err
 	}
-	searchResult, err := SearchSimilarChunks(ctx, queryEmbedding, fileIDs, 3)
+	searchResult, err := SearchSimilarChunks(ctx, queryEmbedding, conversationID, 3)
 	markdown := formatSearchResultsToMarkdown(searchResult)
 	return markdown, err
 }

@@ -113,7 +113,7 @@ func JWTMiddleware() gin.HandlerFunc {
 
 		// Get the user ID from the token claims
 		claims := token.Claims.(jwt.MapClaims)
-		fmt.Println("user", claims["sub"])
+
 		c.Set("user", claims["sub"])
 		c.Next()
 	}

@@ -21,93 +21,6 @@ class UserMessage extends HTMLElement {
     }
 }
 
-class FileUploadBtn extends HTMLElement {
-    files: string[]
-
-    constructor() {
-        super()
-        this.files = []
-        const isNew = this.getAttribute('isNew') || '';
-
-
-        this.innerHTML = `
-           <form action="">
-               <input type="file" name="file" id="">
-            </form>
-        `;
-
-
-        const input: HTMLFormElement | null = this.querySelector('form input');
-        input?.addEventListener('change', submit);
-
-
-        async function submit(e: any) {
-            e.preventDefault();
-            const existingConversation = (window as any).goChat.conversation;
-                const file = e.target.files[0]
-            if(isNew && !existingConversation) {
-                const id = await createInStorage()
-                await uploadFile(file, id)
-            } else {
-                (window as any).goChat.conversation.uploadFile(file)
-            }
-        }
-    }
-}
-
-class TextArea extends HTMLElement {
-    constructor() {
-        super()
-
-        const isNew = this.getAttribute('isNew') || '';
-        const files = this.getAttribute('files') || '';
-
-
-        this.innerHTML = `
-        <div>
-        
-            <form
-                class="max-w-3xl mx-auto w-full" 
-            >
-               <textarea name="message" class="input w-full bg-background-tertiary" id="growingTextarea" placeholder="Vertel..."></textarea>
-          <p>files: ${files}</p>
-           </form>
-          <file-upload-btn isNew="${isNew}" />
-        </div>
-
-        `;
-
-        const textarea: HTMLTextAreaElement | null = this.querySelector('#growingTextarea');
-        const form: HTMLFormElement | null = this.querySelector('form');
-        if(!textarea) return;
-
-        textarea.addEventListener('input', autoResize);
-        textarea.addEventListener('keydown', handleKeyDown);
-
-        function autoResize() {
-            if(!textarea) return;
-            textarea.style.height = 'auto';
-            textarea.style.height = textarea.scrollHeight + 'px';
-        }
-
-        function handleKeyDown(e: any) {
-            if (e.key === 'Enter' && !e.shiftKey && textarea) {
-                e.preventDefault();
-                const existingConversation = (window as any).goChat.conversation;
-                // Only create conversation if it doesn't exist and is marked as new
-                if(isNew && !existingConversation) {
-                    (window as any).goChat.createConversation(textarea?.value);
-                } else {
-                    // Handle input for existing conversation
-                    (window as any).goChat.conversation.handleUserInput(textarea?.value)
-                }
-                textarea.value = ''
-            }
-        }
-
-
-    }
-}
 
 class RecentConversation extends HTMLElement {
     connectedCallback() {
@@ -217,8 +130,6 @@ marked.setOptions({
 });
 
 customElements.define('user-message', UserMessage)
-customElements.define('file-upload-btn', FileUploadBtn)
-customElements.define('text-area', TextArea)
 customElements.define('assistant-message', AssistantMessage)
 customElements.define('recent-conversation', RecentConversation)
 
