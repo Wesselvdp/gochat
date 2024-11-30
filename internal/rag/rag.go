@@ -181,6 +181,38 @@ func RemoveDocumentsByFileId(ctx context.Context, fileID string, conversationID 
 	return nil
 }
 
+func RemovePartition(ctx context.Context, conversationID string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	milvusClient, err := client.NewClient(ctx, client.Config{
+		Address:        milvusAddr,
+		Username:       "",
+		Password:       "",
+		DBName:         "",
+		Identifier:     "",
+		EnableTLSAuth:  false,
+		APIKey:         "",
+		ServerVersion:  "",
+		DialOptions:    nil,
+		RetryRateLimit: nil,
+		DisableConn:    false,
+	})
+
+	if err != nil {
+		// handling error and exit, to make example simple here
+		fmt.Println("NewClient error:", err.Error())
+		return err
+	}
+
+	err = milvusClient.DropPartition(ctx, collectionName, conversationID)
+	if err != nil {
+		fmt.Println("Delete err:", err.Error())
+		return err
+	}
+
+	return nil
+}
+
 func SearchSimilarChunks(
 	ctx context.Context,
 	queryEmbedding []float32,

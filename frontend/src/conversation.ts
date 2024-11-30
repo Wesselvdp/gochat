@@ -158,6 +158,15 @@ export async function removeFile(fileId: string, conversationId: string) {
     await db.conversation.update({...conv, files: [...conv.files.filter(f => f.id !== fileId)]})
 }
 
+export async function removeConversation(conversationId: string) {
+    axios.post(`/conversation/delete`, { conversationId }, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    })
+    db.conversation.delete(conversationId);
+}
+
 export async function createInStorage() {
     const id  = nanoid()
     db.conversation.create(id)

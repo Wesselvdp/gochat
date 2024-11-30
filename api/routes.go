@@ -78,6 +78,7 @@ func AddRoutes(r *gin.Engine) {
 		protected.POST("send-message", afterRequestMiddleware, handlers.SendMessageHandler())
 		protected.POST("file/upload", handlers.FileUploadHandler())
 		protected.POST("file/delete", handlers.FileDeleteHandler())
+		protected.POST("conversation/delete", handlers.PartitionDeleteHandler())
 	}
 
 }

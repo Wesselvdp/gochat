@@ -148,7 +148,6 @@ func ChatPageHandler() gin.HandlerFunc {
 		defer cancel()
 
 		id := ctx.Param("id")
-		//isNew := ctx.DefaultQuery("create", "f") == "true"
 
 		isHTMX := ctx.GetHeader("HX-Request") != ""
 		if isHTMX {
@@ -162,7 +161,6 @@ func ChatPageHandler() gin.HandlerFunc {
 
 func FileUploadHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-
 		// Get conversationId from form data
 		conversationID := c.PostForm("conversationId")
 		fmt.Println("conversationID:", conversationID)
@@ -217,6 +215,26 @@ func FileDeleteHandler() gin.HandlerFunc {
 
 		c.JSON(http.StatusOK, gin.H{
 			"message": fmt.Sprintf("File %s successfully deleted", fileID),
+		})
+	}
+
+}
+
+func PartitionDeleteHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Get conversationId from form data
+		conversationID := c.PostForm("conversationId")
+
+		// Get file from form data
+		// Save file entry locally
+		err := rag.RemovePartition(c, conversationID)
+
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"message": fmt.Sprintf("Partition %s successfully deleted", conversationID),
 		})
 	}
 

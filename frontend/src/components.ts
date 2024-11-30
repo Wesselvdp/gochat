@@ -2,7 +2,7 @@ import db from "./db";
 import {marked} from "marked";
 import hljs from 'highlight.js'
 
-import {createInStorage, uploadFile} from "./conversation";
+import {createInStorage, removeConversation, uploadFile} from "./conversation";
 class UserMessage extends HTMLElement {
     constructor() {
         super()
@@ -44,8 +44,13 @@ class RecentConversation extends HTMLElement {
             `;
 
         this.querySelector('#deleteBtn')?.addEventListener('click', () => {
-           db.conversation.delete(id);
+            removeConversation(id);
+
+            if (window.location.href.endsWith(`c/${id}`)) {
+                htmx.ajax('GET', '/component/newchat', {target:'#inner'})
+            }
             (window as any).goChat.recentConversations.init()
+
         });
 
 
