@@ -12,11 +12,16 @@ templ Footer() {
 	</footer>
 }
 
-templ Header() {
+templ Header(account string) {
 	<head>
 		<script src="https://unpkg.com/htmx.org@1.9.10" integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC" crossorigin="anonymous"></script>
 		<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"/>
 		<link rel="stylesheet" href="/static/style.css"/>
+		<!-- Organization-Specific Stylesheet -->
+		<link rel="stylesheet" href={ "/static/themes/default.css" }/>
+		if account != "" {
+			<link rel="stylesheet" href={ "/static/themes/" + account + ".css" }/>
+		}
 		<script src="/static/bundle.js" defer></script>
 		<meta charset="UTF-8"/>
 		<link rel="icon" type="image/x-icon" href="/static/favicon.ico"/>
@@ -46,8 +51,8 @@ templ NewChat() {
 	<div class="flex-1 p-4 flex items-center justify-center w-full">
 		<div class="w-full flex justify-center flex-col items-center">
 			<div class="mb-4 text-center">
-				<h1 class="h1 text-4xl text-heading">Welkom,</h1>
-				<h2 class="h2 block text-2xl">Veilig, versleutelde AI. Het kan.</h2>
+				<h1 class="h1 text-4xl t text-heading">Welkom,</h1>
+				<h2 class="h2 block text-brand-secondary text-2xl">Veilig, versleutelde AI. Het kan.</h2>
 			</div>
 			<user-input-form class="w-full"></user-input-form>
 			// <text-area isNew="true" class="w-full"></text-area>

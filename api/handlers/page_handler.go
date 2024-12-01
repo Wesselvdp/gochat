@@ -38,7 +38,18 @@ func IndexPageHandler() gin.HandlerFunc {
 		_, cancel := context.WithTimeout(context.Background(), appTimeout)
 		defer cancel()
 
-		render(ctx, http.StatusOK, views.Index())
+		userID := ctx.GetString("user")
+
+		userService := services.NewUserService()
+
+		//
+		//var account *string
+		user, err := userService.Get(ctx, userID)
+		if err != nil {
+			fmt.Println("err", err)
+		}
+		account := user.AccountID.String
+		render(ctx, http.StatusOK, views.Index(account))
 	}
 }
 

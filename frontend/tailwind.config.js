@@ -5,6 +5,7 @@ module.exports = {
     'bg-main',
     'text-main',
     'bg-tertiary',
+    'background-tertiary',
     'bg-background-bubble'
   ],
   theme: {
@@ -17,6 +18,7 @@ module.exports = {
         'background-primary': 'var(--primary-background-color)',
         'background-secondary': 'var(--secondary-background-color)',
         'background-tertiary': 'var(--tertiary-background-color)',
+        'background-4': 'var(--4-background-color)',
 
         'text': 'var(--text-color)',
         'heading': 'var(--heading-color)',

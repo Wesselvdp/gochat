@@ -1,9 +1,9 @@
 import { defineConfig, loadEnv } from "vite";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
+import { viteStaticCopy } from 'vite-plugin-static-copy'
 import path from "path";
 import tailwindcss from 'tailwindcss'
 import autoprefixer from "autoprefixer";
-
 
 export default defineConfig(({  mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
@@ -23,6 +23,7 @@ export default defineConfig(({  mode }) => {
         output: {
           // Ensure no chunk splitting
           manualChunks: undefined,
+
         },
       },
 
@@ -39,6 +40,16 @@ export default defineConfig(({  mode }) => {
     },
 
     plugins: [
+
+        viteStaticCopy({
+            targets: [
+                {
+                    src: path.resolve(__dirname, './src/themes') + '/[!.]*', // 1️⃣
+                    dest: './themes/', // 2️⃣
+                },
+            ],
+        }),
+
       mode === 'production' && sentryVitePlugin({
         org: "torgonio",
         project: "go",

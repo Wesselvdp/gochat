@@ -99,7 +99,7 @@ func (us *UserService) Create(ctx context.Context, params UserParams) (*schema.U
 	return &newUser, nil
 }
 
-func (us *UserService) Get(ctx context.Context, id string) (*schema.User, error) {
+func (us *UserService) Get(ctx context.Context, id string) (*schema.GetUserRow, error) {
 	user, err := us.queries.GetUser(ctx, id)
 
 	if err != nil {

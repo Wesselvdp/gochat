@@ -1,0 +1,32 @@
+/*:root {*/
+/*    --text-color: rgb(33, 37, 41);*/
+
+/*    --primary-brand-color: #E6007E;*/
+/*    --secondary-brand-color: #FF8200;*/
+
+
+/*    --primary-background-color: #ffffff;*/
+/*    --secondary-background-color: #f8f9fa;*/
+/*    --tertiary-background-color: #f1f3f5;*/
+
+/*    --chat-bubble: var(--tertiary-background-color);*/
+/*    --heading-color: var(--primary-brand-color);*/
+/*}*/
+@media (prefers-color-scheme: dark) {
+    :root {
+        --text-color: #ffffff ;
+        --text-color-light: cccccc ;
+
+        --primary-brand-color: rgb(230, 215, 225);
+        --secondary-brand-color: #807a86;
+
+        --primary-background-color: #1c1f29;
+        --secondary-background-color: #262932;
+        --tertiary-background-color: #32353d;
+        --4-background-color: #40434a;
+
+        --chat-bubble: var(--tertiary-background-color);
+        --heading-color: var(--primary-brand-color);
+    }
+}
+/*Lighter: #40434a*/

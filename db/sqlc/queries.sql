@@ -25,8 +25,14 @@ WHERE id = ?;
 
 -- Users
 -- name: GetUser :one
-SELECT * FROM user
-WHERE id = ? LIMIT 1;
+SELECT
+    u.*,
+    a.id AS account_id,
+    a.name AS account_name
+FROM user u
+         LEFT JOIN account a ON u.account = a.id
+WHERE u.id = ?
+LIMIT 1;
 
 -- name: GetUserByEmail :one
 SELECT * FROM user

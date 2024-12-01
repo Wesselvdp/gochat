@@ -102,7 +102,7 @@ export class SimpleGreeting extends LitElement {
     // Render the UI as a function of component state
     render() {
         return html`
-            <div class="bg-slate-400 rounded-b-lg px-4 mx-3 mt-[-3px] flex ">
+            <div class="bg-background-4 rounded-b-lg px-4 mx-3 mt-[-3px] flex ">
                 <div class="flex-1 flex gap-4 py-2">
                          ${this.files.map((file, i) =>
                                  
