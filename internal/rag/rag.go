@@ -7,8 +7,8 @@ import (
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
 	"gochat/internal/ai"
 	"io"
-	"log"
 	"mime/multipart"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -21,7 +21,7 @@ var extractors = map[string]TextExtractor{
 }
 
 const (
-	milvusAddr         = `localhost:19530`
+	milvusAddr         = `milvus-standalone:19530:19530`
 	collectionName     = `documents`
 	dim                = 1024
 	relevanceThreshold = 0.5
@@ -74,10 +74,12 @@ func CreateChunkDocuments(text string, fileID string) ([]Document, error) {
 	return docs, nil
 }
 
-// SaveDocuments Saves new documents to the Vector DB's conversation partition
-func SaveDocuments(ctx context.Context, docs []Document, fileID string, conversationID string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+func initMilvusClient(ctx context.Context) (client.Client, error) {
+	milvusAddr := os.Getenv("MILVUS_ADDRESS")
+	if milvusAddr == "" {
+		milvusAddr = "milvus-standalone:19530"
+	}
+
 	milvusClient, err := client.NewClient(ctx, client.Config{
 		Address:        milvusAddr,
 		Username:       "",
@@ -91,12 +93,25 @@ func SaveDocuments(ctx context.Context, docs []Document, fileID string, conversa
 		RetryRateLimit: nil,
 		DisableConn:    false,
 	})
+
 	if err != nil {
 		// handling error and exit, to make example simple here
 		fmt.Println("NewClient error:", err.Error())
-		return err
+		return nil, err
 	}
 
+	return milvusClient, nil
+}
+
+// SaveDocuments Saves new documents to the Vector DB's conversation partition
+func SaveDocuments(ctx context.Context, docs []Document, fileID string, conversationID string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	milvusClient, err := initMilvusClient(ctx)
+	if err != nil {
+		return err
+	}
 	// Prepare the data columns
 	numDocs := len(docs)
 
@@ -150,23 +165,8 @@ func SaveDocuments(ctx context.Context, docs []Document, fileID string, conversa
 func RemoveDocumentsByFileId(ctx context.Context, fileID string, conversationID string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	milvusClient, err := client.NewClient(ctx, client.Config{
-		Address:        milvusAddr,
-		Username:       "",
-		Password:       "",
-		DBName:         "",
-		Identifier:     "",
-		EnableTLSAuth:  false,
-		APIKey:         "",
-		ServerVersion:  "",
-		DialOptions:    nil,
-		RetryRateLimit: nil,
-		DisableConn:    false,
-	})
-
+	milvusClient, err := initMilvusClient(ctx)
 	if err != nil {
-		// handling error and exit, to make example simple here
-		fmt.Println("NewClient error:", err.Error())
 		return err
 	}
 
@@ -184,19 +184,10 @@ func RemoveDocumentsByFileId(ctx context.Context, fileID string, conversationID 
 func RemovePartition(ctx context.Context, conversationID string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	milvusClient, err := client.NewClient(ctx, client.Config{
-		Address:        milvusAddr,
-		Username:       "",
-		Password:       "",
-		DBName:         "",
-		Identifier:     "",
-		EnableTLSAuth:  false,
-		APIKey:         "",
-		ServerVersion:  "",
-		DialOptions:    nil,
-		RetryRateLimit: nil,
-		DisableConn:    false,
-	})
+	milvusClient, err := initMilvusClient(ctx)
+	if err != nil {
+		return err
+	}
 
 	if err != nil {
 		// handling error and exit, to make example simple here
@@ -219,13 +210,11 @@ func SearchSimilarChunks(
 	conversationID string,
 	topK int64,
 ) ([]SearchResult, error) {
-	milvusClient, err := client.NewClient(ctx, client.Config{
-		Address: milvusAddr,
-	})
+	milvusClient, err := initMilvusClient(ctx)
 	if err != nil {
-		// handling error and exit, to make example simple here
-		log.Fatal("failed to connect to milvus:", err.Error())
+		return nil, err
 	}
+
 	err = milvusClient.LoadCollection(ctx, collectionName, false)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load collection: %w", err)
