@@ -123,12 +123,11 @@ class Conversation {
 }
 
 export async function uploadFile(file: File, conversationId: string) {
-    console.log({conversationId})
     if(!file) {
-        return new Error("missing param file")
+        throw new Error("missing param file")
     }
     if(!conversationId) {
-        return new Error("missing param conversationId")
+        throw new Error("missing param conversationId")
     }
     const { data } = await axios.post(`/file/upload`, { file, conversationId }, {
         headers: {

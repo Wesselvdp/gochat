@@ -86,11 +86,11 @@ func SendMessageHandler() gin.HandlerFunc {
 		// If files exist, do vector search and augment messages
 		var augmentedMessages []openai.ChatCompletionMessage
 		if data.HasFiles {
-			fmt.Printf("FILES!")
+
 			// Retrieve relevant document chunks based on files
 			lastMessage := data.Messages[len(data.Messages)-1]
 			documentContext, err := rag.Query(ctx, lastMessage.Content, data.ConversationID)
-			fmt.Println("documentContext", documentContext)
+
 			if err != nil {
 				// Log error but don't fail the request
 				log.Printf("Document context retrieval error: %v", err)
@@ -100,17 +100,20 @@ func SendMessageHandler() gin.HandlerFunc {
 			augmentedMessages = append(data.Messages[:len(data.Messages)-1], []openai.ChatCompletionMessage{
 				{
 					Role: "system",
-					Content: `You are an AI assistant tasked with answering questions STRICTLY based on the provided document context.
+					Content: `
+					You are an AI assistant tasked with answering questions STRICTLY based on the provided document context.
 
-				IMPORTANT RULES:
-				- If document context is provided, you MUST use ONLY the information from that context to answer.
-				- Do NOT use any external or general knowledge when context is present.
-				- Directly quote from the context when possible.`,
+					IMPORTANT RULES:
+					- If document context is provided, you MUST use ONLY the information from that context to answer.
+					- If no context is provided or the context isn't relevant, respond by saying that the answer to the question was not found in the document. Remember to answer in the user's language
+					- Do NOT use any external or general knowledge when context is present.
+					- Directly quote from the context when possible.
+					- ALWAYS respond in the language of the user.
+					
+					DOCUMENT CONTEXT:
+					` + documentContext,
 				},
-				{
-					Role:    "system",
-					Content: "If document context is provided below, use it to answer questions. If no context is provided or the context isn't relevant, respond based on your general knowledge.",
-				},
+
 				{
 					Role:    "system",
 					Content: documentContext, // Retrieved document chunks
@@ -163,7 +166,6 @@ func FileUploadHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Get conversationId from form data
 		conversationID := c.PostForm("conversationId")
-		fmt.Println("conversationID:", conversationID)
 		// Get file from form data
 		file, err := c.FormFile("file")
 

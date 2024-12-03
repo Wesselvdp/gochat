@@ -9,3 +9,6 @@ curl https://cqzqss48xndt4b-11434.proxy.runpod.net/api/generate -d '{
     "model": "gemma2:27b",
     "prompt": "Why is the sky blue?"
 }'
+
+Attu
+docker run -p 8000:3000 -e MILVUS_URL=142.93.224.213:19530 zilliz/attu:v2.4

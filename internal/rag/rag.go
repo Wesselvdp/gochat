@@ -21,10 +21,9 @@ var extractors = map[string]TextExtractor{
 }
 
 const (
-	milvusAddr         = `milvus-standalone:19530:19530`
 	collectionName     = `documents`
 	dim                = 1024
-	relevanceThreshold = 0.5
+	relevanceThreshold = 90
 )
 
 type Document struct {
@@ -245,11 +244,6 @@ func SearchSimilarChunks(
 	if err != nil {
 		return nil, fmt.Errorf("search failed: %w", err)
 	}
-	//fmt.Printf("%#v\n", searchResult)
-	for i, sr := range searchResult {
-		fmt.Println(sr.Fields.GetColumn("text").GetAsString(i))
-		fmt.Println(sr.Scores)
-	}
 
 	results := make([]SearchResult, 0, topK)
 
@@ -260,7 +254,6 @@ func SearchSimilarChunks(
 		// Note: For L2 distance, lower scores indicate higher similarity
 		// So we want scores below the threshold
 		if current.Scores[i] > relevanceThreshold {
-			fmt.Println("OUT:", current.Scores[i])
 			continue // Skip this chunk if it's not relevant enough
 		}
 
@@ -327,13 +320,10 @@ func formatSearchResultsToMarkdown(results []SearchResult) string {
 	formattedContext.WriteString("Document Context:\n")
 
 	for _, result := range results {
-		// Only include results above a certain threshold (e.g., 0.8)
-		//if result.Score > 0.8 {
 		formattedContext.WriteString("---\n")
-		formattedContext.WriteString(fmt.Sprintf("%s\n", result.Text))
+		formattedContext.WriteString(fmt.Sprintf("%s\n", result))
 		formattedContext.WriteString(fmt.Sprintf("Relevance Score: %.2f\n", result.Score))
 		formattedContext.WriteString(fmt.Sprintf("Chunk Index: %d\n", result.ChunkIndex))
-		//}
 	}
 
 	return formattedContext.String()

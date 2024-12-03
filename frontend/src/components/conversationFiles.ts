@@ -3,7 +3,7 @@ import {css, html, LitElement, unsafeCSS} from 'lit';
 
 import {customElement, property, state} from 'lit/decorators.js';
 import globalStyles from '../styles.scss?inline';
-import {removeFile, uploadFile} from "../conversation";
+import {createInStorage, removeFile, uploadFile} from "../conversation";
 import db from "../db";
 
 
@@ -70,12 +70,16 @@ export class SimpleGreeting extends LitElement {
         const file = e.target.files[0];
         this.files = [...this.files, {name: file.name, status: 'loading', id: ""}]
 
+        if (!this.conversationId) {
+            const id = await createInStorage()
+            this.conversationId = id
+        }
+
         try {
             const fileId =  await uploadFile(file, this.conversationId)
             this._setLastFile({status: 'success', id: fileId, name: file.name})
 
         } catch (err) {
-            console.log("file Upload error", err)
             this.files = [...this.files.slice(0, -1)]
         }
 
