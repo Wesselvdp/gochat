@@ -76,7 +76,7 @@ func CreateChunkDocuments(text string, fileID string) ([]Document, error) {
 func initMilvusClient(ctx context.Context) (client.Client, error) {
 	milvusAddr := os.Getenv("MILVUS_ADDRESS")
 	if milvusAddr == "" {
-		milvusAddr = "milvus-standalone:19530"
+		milvusAddr = "standalone:19530"
 	}
 
 	milvusClient, err := client.NewClient(ctx, client.Config{
