@@ -48,4 +48,5 @@ e2e/playwright/.cache/
 database.db
 /test-results
 sqlite3:
-local_db.sqlite
+local_db.db
+delete.txt
