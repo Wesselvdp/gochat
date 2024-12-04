@@ -48,3 +48,4 @@ e2e/playwright/.cache/
 database.db
 /test-results
 sqlite3:
+local_db.sqlite

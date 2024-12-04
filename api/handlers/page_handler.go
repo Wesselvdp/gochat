@@ -83,6 +83,12 @@ func SendMessageHandler() gin.HandlerFunc {
 			return
 		}
 
+		userID, exists := ctx.Get("user")
+		if exists {
+			eventService := services.NewEventService(userID.(string))
+			eventService.Create(services.EventLogin)
+		}
+
 		// If files exist, do vector search and augment messages
 		var augmentedMessages []openai.ChatCompletionMessage
 		if data.HasFiles {

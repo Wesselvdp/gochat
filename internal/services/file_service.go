@@ -19,7 +19,7 @@ func NewFileService(ctx *gin.Context) (*FileService, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Error initializing queries for event service: " + err.Error())
 	}
-	//ctx.Set("user", "sientje")
+
 	owner, exist := ctx.Get("user")
 	if !exist {
 		return nil, fmt.Errorf("user not found in context")

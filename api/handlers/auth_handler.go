@@ -41,6 +41,9 @@ func OAuthRedirectAzure(r *gin.Engine) gin.HandlerFunc {
 		userService := services.NewUserService()
 		dbUser, err := userService.GetOrCreate(c, user)
 
+		eventService := services.NewEventService(dbUser.ID)
+		eventService.Create(services.EventLogin)
+
 		if err != nil {
 			fmt.Println("Error creating user: " + err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
