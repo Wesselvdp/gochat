@@ -84,9 +84,6 @@ func initMilvusClient(ctx context.Context) (client.Client, error) {
 		return nil, fmt.Errorf("milvus password is empty")
 	}
 
-	fmt.Println("milvusAddr:", milvusAddr)
-	fmt.Println("milvusPw:", milvusPw)
-
 	milvusClient, err := client.NewClient(ctx, client.Config{
 		Address:        milvusAddr,
 		Username:       "root",

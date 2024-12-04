@@ -38,6 +38,11 @@ templ Avatar() {
 }
 
 templ NewChat() {
+	<script>
+	if (window.goChat) {
+		window.goChat.conversation = null;
+	}
+	</script>
 	<div class="flex-1 p-4 flex items-center justify-center w-full">
 		<div class="w-full flex justify-center flex-col items-center">
 			<div class="mb-4 text-center">

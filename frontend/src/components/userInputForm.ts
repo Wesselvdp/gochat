@@ -27,6 +27,7 @@ export class userInputForm extends LitElement {
     }
 
     handleMsg = async (msg: string) => {
+
         // If there is no conversation initted
         if(!(window as any).goChat.conversation) {
             const id = this.conversationId || await this.initConversation()
@@ -37,7 +38,7 @@ export class userInputForm extends LitElement {
          (window as any).goChat.conversation.handleUserInput(msg)
 
     }
-    
+
     render() {
         return html`
             <div class="max-w-3xl mx-auto w-full">
