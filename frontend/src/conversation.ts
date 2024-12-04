@@ -1,4 +1,4 @@
-import db, {Message, SavedConversation} from "./db";
+import db, {getConversation, Message, SavedConversation} from "./db";
 import axios from "axios";
 import { nanoid } from "nanoid";
 import { marked } from "marked";
@@ -86,16 +86,16 @@ class Conversation {
 
         // Get past messages
         const messages = await this.getMessages()
-        const openMessages = messages.map((m: Message) => ({role: m.role, content: m.content}))
+        const openMessages = messages.map((m: Message) => ({role: m.role, content: m.content})) as ChatCompletionMessageParam[]
         const contextMessages = openMessages.slice(-5)
 
         // get files
         const conv = await db.conversation.get(this.id)
         const hasFiles = !!conv?.files.map(f => f.id).length
 
-        const res = await axios.post(`/send-message`, {messages: contextMessages, conversationId: this.id, hasFiles})
+        const answer = await getCompletion(contextMessages, this.id, hasFiles)
         // if(res.status === 200) {
-            const savedAssistantMessage = await db.messages.create(this.id, {role: 'assistant', content: res.data.content})
+        const savedAssistantMessage = await db.messages.create(this.id, {role: 'assistant', content: answer})
         this.setLoading(false)
 
         await this.addMessageToDOM(savedAssistantMessage)
@@ -105,21 +105,6 @@ class Conversation {
         // if(messages.length === 1) db.conversation.update({...this.data, title: content})
     }
 
-    async handleServerResponse(r: any) {
-        const { content } = JSON.parse(r)
-        const savedMessage = await db.messages.create(this.id, {role: 'assistant', content})
-        await this.addMessageToDOM(savedMessage)
-        //  Todo: handle exceptions
-    }
-
-    async delete() {
-        console.log({deleting: this.id})
-        await db.conversation.delete(this.id)
-    }
-
-    uploadFile(file: File) {
-        uploadFile(file, this.id)
-    }
 }
 
 export async function uploadFile(file: File, conversationId: string) {
@@ -172,23 +157,19 @@ export async function createInStorage() {
     return id;
 }
 
-export async function createConversation(content: string, id: string) {
-    await db.messages.create(id, {role: 'user', content})
-    window.location.href = window.location.origin + `/c/${id}`
+export async function createUserMessage(content: string, id: string) {
+     db.messages.create(id, {role: 'user', content})
 }
 
-async function getCompletion(messages: ChatCompletionMessageParam[]): Promise<string> {
+async function getCompletion(messages: ChatCompletionMessageParam[], conversationId?: string, hasFiles?: boolean): Promise<string> {
     try {
-        const res = await axios.post(`/send-message`, {messages})
+        const res = await axios.post(`/send-message`, {messages, conversationId, hasFiles})
         return res.data.content
     } catch (err) {
         console.log(err)
         return "Oeps, er is iets mis. We sturen er een ontwikkelaar op af"
     }
 }
-
-
-
 
 
 export async function initConversation(id: string) {
@@ -210,9 +191,14 @@ export async function initConversation(id: string) {
     const conversation = new Conversation(savedConversation, messages);
     await conversation.drawMessages()
 
+
     if(lastMessage?.role === "user") {
         try {
-            const answer = await getCompletion( messages.map(m => ({role: m.role, content: m.content} as ChatCompletionUserMessageParam)))
+            // get files
+            const conv = await db.conversation.get(id)
+            const hasFiles = !!conv?.files.map(f => f.id).length
+            const openMessages = messages.map(m => ({role: m.role, content: m.content} as ChatCompletionUserMessageParam))
+            const answer = await getCompletion(openMessages, id, hasFiles)
             const savedAssistantMessage = await db.messages.create(conversation.id, {role: 'assistant', content: answer})
             await conversation.addMessageToDOM(savedAssistantMessage)
         } catch (err) {

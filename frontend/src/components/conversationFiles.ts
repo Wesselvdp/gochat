@@ -3,7 +3,7 @@ import {css, html, LitElement, unsafeCSS} from 'lit';
 
 import {customElement, property, state} from 'lit/decorators.js';
 import globalStyles from '../styles.scss?inline';
-import {createInStorage, removeFile, uploadFile} from "../conversation";
+import {removeFile, uploadFile} from "../conversation";
 import db from "../db";
 
 
@@ -47,6 +47,10 @@ export class SimpleGreeting extends LitElement {
     @property({type: String})
     conversationId: string = '';
 
+
+    @property({ attribute: false }) // 'attribute: false' prevents Lit from treating it as an attribute    handleMessage: () => null = () => null
+    initConversation?: () => string;
+
     @state()
     files: FileEntry[] = []
 
@@ -67,16 +71,15 @@ export class SimpleGreeting extends LitElement {
     }
 
     private async _handleFileSubmit(e: any) {
+
         const file = e.target.files[0];
         this.files = [...this.files, {name: file.name, status: 'loading', id: ""}]
 
-        if (!this.conversationId) {
-            const id = await createInStorage()
-            this.conversationId = id
-        }
+
+        let id = this.conversationId || await this.initConversation?.() || ''
 
         try {
-            const fileId =  await uploadFile(file, this.conversationId)
+            const fileId =  await uploadFile(file, id)
             this._setLastFile({status: 'success', id: fileId, name: file.name})
 
         } catch (err) {
@@ -90,10 +93,11 @@ export class SimpleGreeting extends LitElement {
             await removeFile(fileId, this.conversationId)
             this.files = [...this.files.filter(f => f.id !== fileId)]
         } catch (err) {
-            console.log("caught!", err)
+            console.log({err})
         }
-
     }
+
+
 
     // Render the UI as a function of component state
     render() {

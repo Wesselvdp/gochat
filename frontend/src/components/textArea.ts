@@ -19,7 +19,7 @@ export class textArea extends LitElement {
         const el = e.target as HTMLTextAreaElement; // Assert the type of e.target        if(!el) return;
         el.style.height = 'auto';
         const growHeight = el.scrollHeight
-        el.style.height = `${growHeight > 300 ? 300 : growHeight}px`
+    el.style.height = `${growHeight > 300 ? 300 : growHeight}px`
     }
 
     // Submit on enter but not shift enter
