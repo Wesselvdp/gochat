@@ -24,6 +24,7 @@ type Event struct {
 	ID        int64
 	Event     string
 	Timestamp string
+	Metadata  interface{}
 	User      string
 }
 

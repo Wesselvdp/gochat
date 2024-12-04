@@ -15,7 +15,7 @@ func TestEventService(t *testing.T) {
 	assert.NotNil(t, eventService)
 
 	// Create Event
-	event, err := eventService.Create(services.EventLogin)
+	event, err := eventService.Create(services.EventLogin, nil)
 	if err != nil {
 		t.Error(err)
 	}
@@ -28,7 +28,7 @@ func TestEventService(t *testing.T) {
 	assert.Equal(t, testUserID, event.User)
 
 	// Event 2
-	_, err = eventService.Create("ThisIsWrong")
+	_, err = eventService.Create("ThisIsWrong", nil)
 	assert.NotNil(t, err)
 
 }

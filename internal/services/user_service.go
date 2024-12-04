@@ -69,6 +69,11 @@ func (us *UserService) Create(ctx context.Context, params UserParams) (*schema.U
 	}
 
 	if accountID == nil {
+		eventService := NewEventService("")
+		eventService.Create(UnknownAccount, map[string]interface{}{
+			"email":  params.Email,
+			"status": "error",
+		})
 		return nil, fmt.Errorf("Hi there, it seems your organisation has no active subscription. If you like access, please contact wessel@torgon.io")
 	}
 

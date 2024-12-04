@@ -56,7 +56,9 @@ func OAuthRedirectAzure(r *gin.Engine) gin.HandlerFunc {
 
 		// Track event
 		eventService := services.NewEventService(dbUser.ID)
-		eventService.Create(services.EventLogin)
+		eventService.Create(services.EventLogin, map[string]interface{}{
+			"authProvider": "azure",
+		})
 
 		c.Redirect(http.StatusMovedPermanently, "/")
 

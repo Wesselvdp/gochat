@@ -56,9 +56,9 @@ WHERE id = ?;
 
 -- name: CreateEvent :one
 INSERT INTO event (
-    user, event
+    user, event, metadata
 ) VALUES (
-     ?, ?
+     ?, ?, ?
 )
 RETURNING *;
 

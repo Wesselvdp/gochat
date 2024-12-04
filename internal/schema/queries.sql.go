@@ -46,26 +46,28 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (A
 const createEvent = `-- name: CreateEvent :one
 
 INSERT INTO event (
-    user, event
+    user, event, metadata
 ) VALUES (
-     ?, ?
+     ?, ?, ?
 )
-RETURNING id, event, timestamp, user
+RETURNING id, event, timestamp, metadata, user
 `
 
 type CreateEventParams struct {
-	User  string
-	Event string
+	User     string
+	Event    string
+	Metadata interface{}
 }
 
 // EVENTS
 func (q *Queries) CreateEvent(ctx context.Context, arg CreateEventParams) (Event, error) {
-	row := q.db.QueryRowContext(ctx, createEvent, arg.User, arg.Event)
+	row := q.db.QueryRowContext(ctx, createEvent, arg.User, arg.Event, arg.Metadata)
 	var i Event
 	err := row.Scan(
 		&i.ID,
 		&i.Event,
 		&i.Timestamp,
+		&i.Metadata,
 		&i.User,
 	)
 	return i, err
@@ -194,7 +196,7 @@ func (q *Queries) GetAccountByDomain(ctx context.Context, domain string) (string
 }
 
 const getEvent = `-- name: GetEvent :one
-SELECT id, event, timestamp, user FROM event
+SELECT id, event, timestamp, metadata, user FROM event
 WHERE id = ? LIMIT 1
 `
 
@@ -205,7 +207,26 @@ func (q *Queries) GetEvent(ctx context.Context, id int64) (Event, error) {
 		&i.ID,
 		&i.Event,
 		&i.Timestamp,
+		&i.Metadata,
 		&i.User,
+	)
+	return i, err
+}
+
+const getFile = `-- name: GetFile :one
+SELECT id, name, createdat, updatedat, owner FROM file
+WHERE id = ? LIMIT 1
+`
+
+func (q *Queries) GetFile(ctx context.Context, id string) (File, error) {
+	row := q.db.QueryRowContext(ctx, getFile, id)
+	var i File
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Createdat,
+		&i.Updatedat,
+		&i.Owner,
 	)
 	return i, err
 }

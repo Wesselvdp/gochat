@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	database "gochat/internal/db"
 	"gochat/internal/schema"
@@ -15,8 +16,9 @@ type EventService struct {
 type EventType string
 
 const (
-	EventLogin   EventType = "login"
-	EventMessage EventType = "message"
+	EventLogin     EventType = "login"
+	EventMessage   EventType = "message"
+	UnknownAccount EventType = "unknownAccount"
 )
 
 // IsValid checks if the event type is valid
@@ -37,14 +39,21 @@ func NewEventService(userId string) *EventService {
 	return &EventService{queries: queries, user: userId}
 }
 
-func (es *EventService) Create(event EventType) (*schema.Event, error) {
+func (es *EventService) Create(event EventType, metadata interface{}) (*schema.Event, error) {
 	// Validate event type
 	if !event.IsValid() {
 		return nil, fmt.Errorf("invalid event type: %s", event)
 	}
+
+	metadataJSON, err := json.Marshal(metadata)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal metadata: %v", err)
+	}
+
 	savedEvent, err := es.queries.CreateEvent(context.Background(), schema.CreateEventParams{
-		User:  es.user,
-		Event: string(event),
+		User:     es.user,
+		Event:    string(event),
+		Metadata: string(metadataJSON),
 	})
 
 	if err != nil {
