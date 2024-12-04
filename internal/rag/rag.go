@@ -79,10 +79,15 @@ func initMilvusClient(ctx context.Context) (client.Client, error) {
 		milvusAddr = "standalone:19530"
 	}
 
+	milvusPw := os.Getenv("MILVUS_PW")
+	if milvusPw == "" {
+		return nil, fmt.Errorf("milvus address is empty")
+	}
+
 	milvusClient, err := client.NewClient(ctx, client.Config{
 		Address:        milvusAddr,
-		Username:       "",
-		Password:       "",
+		Username:       "root",
+		Password:       milvusPw,
 		DBName:         "",
 		Identifier:     "",
 		EnableTLSAuth:  false,

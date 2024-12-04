@@ -167,7 +167,7 @@ export async function removeConversation(conversationId: string) {
 }
 
 export async function createInStorage() {
-    const id  = nanoid()
+    const id  = nanoid().replace(/-/gi, '');
     db.conversation.create(id)
     return id;
 }
