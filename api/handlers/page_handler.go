@@ -86,7 +86,7 @@ func SendMessageHandler() gin.HandlerFunc {
 		userID, exists := ctx.Get("user")
 		if exists {
 			eventService := services.NewEventService(userID.(string))
-			eventService.Create(services.EventLogin)
+			eventService.Create(services.EventMessage)
 		}
 
 		// If files exist, do vector search and augment messages
