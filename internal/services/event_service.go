@@ -24,7 +24,7 @@ const (
 // IsValid checks if the event type is valid
 func (e EventType) IsValid() bool {
 	switch e {
-	case EventLogin, EventMessage:
+	case EventLogin, EventMessage, UnknownAccount:
 		return true
 	}
 	return false
