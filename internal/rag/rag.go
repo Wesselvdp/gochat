@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
+	"github.com/sashabaranov/go-openai"
 	"gochat/internal/ai"
 	"io"
 	"mime/multipart"
@@ -334,7 +335,7 @@ func formatSearchResultsToMarkdown(results []SearchResult) string {
 	return formattedContext.String()
 }
 
-func Query(ctx context.Context, query string, conversationID string) (string, error) {
+func GetDocumentsFromQuery(ctx context.Context, query string, conversationID string) (string, error) {
 	queryEmbedding, err := ai.GetEmbedding(query)
 	if err != nil {
 		return "", err
@@ -342,4 +343,98 @@ func Query(ctx context.Context, query string, conversationID string) (string, er
 	searchResult, err := SearchSimilarChunks(ctx, queryEmbedding, conversationID, 3)
 	markdown := formatSearchResultsToMarkdown(searchResult)
 	return markdown, err
+}
+
+func DetermineRAG(userQuery string, tryAgain bool) (bool, error) {
+	var additional string
+	if tryAgain {
+		additional = "Note: A similarity search in the uploaded document yielded no relevant results for the user's query."
+	} else {
+		additional = ""
+	}
+
+	prompt := fmt.Sprintf(`
+You are an intelligent assistant. The user has uploaded a document. Your task is to determine if the user's query likely pertains to this document or if the answer can be derived from your general knowledge. 
+%s
+Respond with either "true" or "false" and explain your reasoning briefly:
+- Respond "true" if you believe the query likely requires information from the uploaded document or other sources outside your training.
+- Respond "false" only if you are very confident that the query can be fully answered with your existing knowledge and does not require the document.
+- If the similarity search in the document yielded no results, consider this in your reasoning but do not assume it conclusively rules out the document's relevance.
+
+User Query: %s
+`, additional, userQuery)
+
+	response, err := ai.SingleQuery(prompt)
+	fmt.Println("toRag", response)
+	if err != nil {
+		return false, err
+	}
+	return strings.Contains(response, "true"), nil
+}
+
+func GetRaggedAnswer(ctx context.Context, messages []openai.ChatCompletionMessage, conversationID string) (string, error) {
+	query := messages[len(messages)-1].Content
+	documentContext, err := GetDocumentsFromQuery(ctx, query, conversationID)
+	fmt.Println("documentContext", documentContext)
+	if err != nil {
+		return "No satisfactory answer was found in the document.", err
+	}
+	if documentContext == "" {
+		isRagRequired, err := DetermineRAG(query, true)
+		if err != nil {
+			return "No satisfactory answer was found in the document.", err
+		}
+		if !isRagRequired {
+			return ai.GetCompletion(messages)
+		} else {
+			return "No satisfactory answer was found in the document.", err
+
+		}
+	}
+
+	systemPrompt := fmt.Sprintf(`# CONTEXT # 
+I am a researcher. In the realm of society and government.
+
+#########
+
+# OBJECTIVE #
+Your task is to help me efficiently go through data. This involves answering my questions with the help of provided data, always answer in a methodical and never make answers up, directly quote from the source when possible
+
+#########
+
+# STYLE #
+Write in an informative and instructional style, resembling a research assistant.
+
+#########
+
+# Tone #
+Maintain a positive and motivational tone throughout, It should feel like a friendly guide offering valuable insights.
+
+# AUDIENCE #
+The target audience is researchers looking to speed up their document analysis. Assume a readership that seeks practical advice and insights into the data they've provided you with'
+
+#########
+
+# RESPONSE FORMAT #
+Provide a clear and consise answer where you quoote from the source if you have found a feasible answer. When you can't find a suitable answer to the researchers question, don't make things up but state that the provided data is insufficient for answering the question
+
+#############
+
+# START ANALYSIS #
+If you understand, answer the user question given the provided data.
+
+# RESEARCHER QUESTION #
+%s
+
+# RAG result #
+%s
+`, query, documentContext)
+
+	response, err := ai.SingleQuery(systemPrompt)
+	if err != nil {
+		return "No satisfactory answer was found in the document.", err
+	}
+
+	return response, nil
+
 }
