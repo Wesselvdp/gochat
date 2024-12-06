@@ -362,7 +362,6 @@ func GetRaggedAnswer(ctx context.Context, messages []openai.ChatCompletionMessag
 	if err != nil {
 		return "", err
 	}
-	fmt.Println("documentContext:", documentContext)
 
 	// LLM will decide whether RAG is required, given the question and the document context
 	useRAG, err := determineRAGWithContext(query, documentContext)
