@@ -50,3 +50,4 @@ database.db
 sqlite3:
 local_db.db
 delete.txt
+file.txt

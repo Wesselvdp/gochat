@@ -90,34 +90,16 @@ func SendMessageHandler() gin.HandlerFunc {
 			})
 		}
 
-		// RAG CHANGES
-		lastMessage := data.Messages[len(data.Messages)-1]
-		userPrompt := lastMessage.Content
-		isRagRequired, err := rag.DetermineRAG(userPrompt, false)
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		}
-		fmt.Println("isRagRequired:", isRagRequired)
-		// END RAG CHANGES
-
-		// If files exist, do vector search and augment messages
-
-		if data.HasFiles && isRagRequired {
-
+		var err error
+		if data.HasFiles {
 			aiResponse, err = rag.GetRaggedAnswer(ctx, data.Messages, data.ConversationID)
-			if err != nil {
-				ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			}
 		} else {
 			// No files, use original messages
 			aiResponse, err = ai.GetCompletion(data.Messages)
 		}
-		//for _, message := range augmentedMessages {
-		//	fmt.Printf("%+v\n", message)
-		//}
 
 		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{"content": "Oeps, er is iets mis. We sturen er een ontwikkelaar op af"})
+			ctx.JSON(http.StatusBadRequest, gin.H{"content": "Oeps, er is iets mis. We sturen er een ontwikkelaar op af", "error": err.Error()})
 		} else {
 			//fmt.Println(aiResponse)
 			response := gin.H{

@@ -11,6 +11,7 @@ import (
 	"mime/multipart"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -24,7 +25,7 @@ var extractors = map[string]TextExtractor{
 const (
 	collectionName     = `documents`
 	dim                = 1024
-	relevanceThreshold = 90
+	relevanceThreshold = 10
 )
 
 type Document struct {
@@ -35,40 +36,48 @@ type Document struct {
 }
 
 type SearchResult struct {
-	Text       string  // The text chunk
-	ChunkIndex int     // Position in original document
-	Score      float32 // Similarity score
-	Distance   float32 // Vector distance
+	Text  string  // The text chunk
+	Score float32 // Similarity score
+}
+
+// SplitText splits the input text into strings based on new lines or sentence-ending punctuation.
+func SplitText(text string) []string {
+
+	re := regexp.MustCompile(`[\.\?]\s+|[\.\?]$`)
+	// Use the regex to split the text
+	sentences := re.Split(text, -1)
+
+	// Trim spaces from each resulting string and filter out empty results
+	var result []string
+	for _, sentence := range sentences {
+		trimmed := strings.TrimSpace(sentence)
+		if trimmed != "" {
+			result = append(result, trimmed)
+		}
+	}
+
+	return result
 }
 
 func CreateChunkDocuments(text string, fileID string) ([]Document, error) {
-	// Define chunk size and overlap (adjust as needed)
-	chunkSize := 400
-	overlap := 50
-	//var chunks []string
-	start := 0
 
 	var docs []Document
-
-	for start < len(text) {
-		end := start + chunkSize
-		if end > len(text) {
-			end = len(text)
-		}
-		chunk := text[start:end]
-		vector, err := ai.GetEmbedding(chunk)
+	texts := SplitText(text)
+	for i, text := range texts {
+		textEmbedding, err := ai.GetEmbedding(text)
 		if err != nil {
 			fmt.Println("GetEmbedding err:", err.Error())
 			return nil, err
 		}
 		doc := Document{
-			Text:      chunk,
-			Embedding: vector,
-			ID:        int64(chunkSize - overlap),
+			Text:      text,
+			Embedding: textEmbedding,
+			ID:        int64(i + 1),
 			fileID:    fileID,
 		}
+
 		docs = append(docs, doc)
-		start += chunkSize - overlap
+
 	}
 
 	return docs, nil
@@ -126,7 +135,7 @@ func SaveDocuments(ctx context.Context, docs []Document, fileID string, conversa
 
 	// Split the data into columns
 	for i, doc := range docs {
-		texts[i] = doc.Text
+		texts[i] = strings.ToValidUTF8(doc.Text, "")
 		embeddings[i] = doc.Embedding
 		ids[i] = fileID
 	}
@@ -194,12 +203,6 @@ func RemovePartition(ctx context.Context, conversationID string) error {
 		return err
 	}
 
-	if err != nil {
-		// handling error and exit, to make example simple here
-		fmt.Println("NewClient error:", err.Error())
-		return err
-	}
-
 	err = milvusClient.DropPartition(ctx, collectionName, conversationID)
 	if err != nil {
 		fmt.Println("Delete err:", err.Error())
@@ -220,12 +223,13 @@ func SearchSimilarChunks(
 		return nil, err
 	}
 
-	err = milvusClient.LoadCollection(ctx, collectionName, false)
+	err = milvusClient.LoadCollection(ctx, collectionName, true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load collection: %w", err)
 	}
-
-	sp, err := entity.NewIndexIvfFlatSearchParam(10)
+	//sp, _ := entity.NewIndexFlatSearchParam()
+	//sp, err := entity.NewIndexIvfFlatSearchParam(200)
+	sp, err := entity.NewIndexHNSWSearchParam(74)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create search parameters: %w", err)
 	}
@@ -234,46 +238,39 @@ func SearchSimilarChunks(
 		entity.FloatVector(queryEmbedding),
 	}
 
+	cols := []string{"text"}
+
 	// Now also retrieving chunk_index
-	searchResult, err := milvusClient.Search(
+	sr, err := milvusClient.Search(
 		ctx,
 		collectionName,
 		[]string{conversationID},
 		"",
-		[]string{"text"},
+		cols,
 		vectors,
 		"embedding",
 		entity.L2,
-		int(topK),
+		5,
 		sp,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("search failed: %w", err)
 	}
 
-	results := make([]SearchResult, 0, topK)
+	firstResult := sr[0]
+	results := make([]SearchResult, sr[0].ResultCount)
 
-	for i := 0; i < len(searchResult); i++ {
-		current := searchResult[i]
-
-		// Filter chunks based on relevance threshold
-		// Note: For L2 distance, lower scores indicate higher similarity
-		// So we want scores below the threshold
-		if current.Scores[i] > relevanceThreshold {
-			continue // Skip this chunk if it's not relevant enough
-		}
-
-		text, err := current.Fields.GetColumn("text").GetAsString(i)
+	// This is a bit brittle and doesn't scale well if we add more cols to the search
+	for i := range results {
+		text, err := firstResult.Fields[0].GetAsString(i)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get text: %w", err)
+			fmt.Println("error", err.Error())
+			continue
 		}
-
-		results = append(results, SearchResult{
-			Text:  text,
-			Score: current.Scores[i],
-		})
+		results[i].Text = text
+		results[i].Score = firstResult.Scores[i]
 	}
-	//
+
 	return results, nil
 }
 
@@ -327,9 +324,8 @@ func formatSearchResultsToMarkdown(results []SearchResult) string {
 
 	for _, result := range results {
 		formattedContext.WriteString("---\n")
-		formattedContext.WriteString(fmt.Sprintf("%s\n", result))
+		formattedContext.WriteString(fmt.Sprintf("%s\n", result.Text))
 		formattedContext.WriteString(fmt.Sprintf("Relevance Score: %.2f\n", result.Score))
-		formattedContext.WriteString(fmt.Sprintf("Chunk Index: %d\n", result.ChunkIndex))
 	}
 
 	return formattedContext.String()
@@ -338,103 +334,49 @@ func formatSearchResultsToMarkdown(results []SearchResult) string {
 func GetDocumentsFromQuery(ctx context.Context, query string, conversationID string) (string, error) {
 	queryEmbedding, err := ai.GetEmbedding(query)
 	if err != nil {
+		fmt.Println("err", err.Error())
 		return "", err
 	}
-	searchResult, err := SearchSimilarChunks(ctx, queryEmbedding, conversationID, 3)
+
+	searchResult, err := SearchSimilarChunks(ctx, queryEmbedding, conversationID, 5)
 	markdown := formatSearchResultsToMarkdown(searchResult)
+
 	return markdown, err
 }
 
-func DetermineRAG(userQuery string, tryAgain bool) (bool, error) {
-	var additional string
-	if tryAgain {
-		additional = "Note: A similarity search in the uploaded document yielded no relevant results for the user's query."
-	} else {
-		additional = ""
-	}
-
-	prompt := fmt.Sprintf(`
-You are an intelligent assistant. The user has uploaded a document. Your task is to determine if the user's query likely pertains to this document or if the answer can be derived from your general knowledge. 
-%s
-Respond with either "true" or "false" and explain your reasoning briefly:
-- Respond "true" if you believe the query likely requires information from the uploaded document or other sources outside your training.
-- Respond "false" only if you are very confident that the query can be fully answered with your existing knowledge and does not require the document.
-- If the similarity search in the document yielded no results, consider this in your reasoning but do not assume it conclusively rules out the document's relevance.
-
-User Query: %s
-`, additional, userQuery)
-
+func determineRAGWithContext(userQuery string, documentContext string) (bool, error) {
+	prompt := RAGDeterminationPrompt(userQuery, documentContext)
 	response, err := ai.SingleQuery(prompt)
-	fmt.Println("toRag", response)
+
 	if err != nil {
 		return false, err
 	}
-	return strings.Contains(response, "true"), nil
+	return strings.Contains(response, "YES"), nil
 }
 
+// GetRaggedAnswer Returns a ragged answer if the LLM deems RAG is required, returns a normal answer if not.
 func GetRaggedAnswer(ctx context.Context, messages []openai.ChatCompletionMessage, conversationID string) (string, error) {
 	query := messages[len(messages)-1].Content
 	documentContext, err := GetDocumentsFromQuery(ctx, query, conversationID)
-	fmt.Println("documentContext", documentContext)
-	if err != nil {
-		return "No satisfactory answer was found in the document.", err
-	}
-	if documentContext == "" {
-		isRagRequired, err := DetermineRAG(query, true)
-		if err != nil {
-			return "No satisfactory answer was found in the document.", err
-		}
-		if !isRagRequired {
-			return ai.GetCompletion(messages)
-		} else {
-			return "No satisfactory answer was found in the document.", err
 
-		}
+	if err != nil {
+		return "", err
+	}
+	fmt.Println("documentContext:", documentContext)
+
+	// LLM will decide whether RAG is required, given the question and the document context
+	useRAG, err := determineRAGWithContext(query, documentContext)
+	if err != nil {
+		return "", err
 	}
 
-	systemPrompt := fmt.Sprintf(`# CONTEXT # 
-I am a researcher. In the realm of society and government.
-
-#########
-
-# OBJECTIVE #
-Your task is to help me efficiently go through data. This involves answering my questions with the help of provided data, always answer in a methodical and never make answers up, directly quote from the source when possible
-
-#########
-
-# STYLE #
-Write in an informative and instructional style, resembling a research assistant.
-
-#########
-
-# Tone #
-Maintain a positive and motivational tone throughout, It should feel like a friendly guide offering valuable insights.
-
-# AUDIENCE #
-The target audience is researchers looking to speed up their document analysis. Assume a readership that seeks practical advice and insights into the data they've provided you with'
-
-#########
-
-# RESPONSE FORMAT #
-Provide a clear and consise answer where you quoote from the source if you have found a feasible answer. When you can't find a suitable answer to the researchers question, don't make things up but state that the provided data is insufficient for answering the question
-
-#############
-
-# START ANALYSIS #
-If you understand, answer the user question given the provided data.
-
-# RESEARCHER QUESTION #
-%s
-
-# RAG result #
-%s
-`, query, documentContext)
-
-	response, err := ai.SingleQuery(systemPrompt)
-	if err != nil {
-		return "No satisfactory answer was found in the document.", err
+	var response string
+	if useRAG {
+		prompt := RagPrompt2(documentContext, query)
+		response, err = ai.SingleQuery(prompt)
+	} else {
+		response, err = ai.GetCompletion(messages)
 	}
 
 	return response, nil
-
 }
