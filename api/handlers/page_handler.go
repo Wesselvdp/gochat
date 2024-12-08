@@ -9,6 +9,7 @@ import (
 	"gochat/internal/ai"
 	"gochat/internal/auth"
 	"gochat/internal/rag"
+	"gochat/internal/schema"
 	"gochat/internal/services"
 	views "gochat/views"
 	"gochat/views/components"
@@ -33,15 +34,21 @@ func render(ctx *gin.Context, status int, template templ.Component) error {
 	return template.Render(ctx.Request.Context(), ctx.Writer)
 }
 
+func getUserData(ctx *gin.Context) (*schema.GetUserRow, error) {
+	userID := ctx.GetString("user")
+	userService := services.NewUserService()
+	user, err := userService.Get(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
 func IndexPageHandler() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		_, cancel := context.WithTimeout(context.Background(), appTimeout)
 		defer cancel()
-
-		userID := ctx.GetString("user")
-		userService := services.NewUserService()
-		user, err := userService.Get(ctx, userID)
-		fmt.Println("user@@@@@", user)
+		user, err := getUserData(ctx)
 		if err != nil {
 			fmt.Println("err", err)
 		}
@@ -81,6 +88,8 @@ func ComponentHandler() gin.HandlerFunc {
 			fmt.Println("err", err)
 		}
 		componentName := ctx.Param("componentName")
+
+		ctx.Header("Cache-Control", "public, max-age=3600")
 		render(ctx, http.StatusOK, components.Component(componentName, user))
 	}
 }
@@ -132,22 +141,18 @@ func ChatPageHandler() gin.HandlerFunc {
 		_, cancel := context.WithTimeout(context.Background(), appTimeout)
 		defer cancel()
 
-		id := ctx.Param("id")
-
+		conversationID := ctx.Param("id")
+		user, err := getUserData(ctx)
+		if err != nil {
+			fmt.Println("err", err)
+		}
 		isHTMX := ctx.GetHeader("HX-Request") != ""
 		if isHTMX {
 			// Serve partial HTML for HTMX requests
-			render(ctx, http.StatusOK, views.Chat(id))
+			render(ctx, http.StatusOK, views.Chat(conversationID, user))
 		} else {
-			userID := ctx.GetString("user")
-			userService := services.NewUserService()
 
-			user, err := userService.Get(ctx, userID)
-
-			if err != nil {
-				fmt.Println("err", err)
-			}
-			render(ctx, http.StatusOK, views.ChatPage(id, user))
+			render(ctx, http.StatusOK, views.ChatPage(conversationID, user))
 		}
 	}
 }

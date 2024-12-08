@@ -71,10 +71,8 @@ class Conversation {
         rootEl?.appendChild(div)
         const nestedElement = document.querySelector("#scrollContainer")
         nestedElement?.scrollTo(0, nestedElement.scrollHeight);
-        // window.scrollTo(0, document.body.scrollHeight);
+
     }
-
-
 
     async handleUserInput(content: string) {
         if (content.trim() === '') return; // Don't send empty content
@@ -94,15 +92,11 @@ class Conversation {
         const hasFiles = !!conv?.files.map(f => f.id).length
 
         const answer = await getCompletion(contextMessages, this.id, hasFiles)
-        // if(res.status === 200) {
-        const savedAssistantMessage = await db.messages.create(this.id, {role: 'assistant', content: answer})
+
+        // Hacky, the addMessagToDOM wants a database message but why should we wait until it's saved in the DB?
+        this.addMessageToDOM({role: 'assistant', content: answer, conversationId: this.id, id: '0', timestamp: 0})
+        await db.messages.create(this.id, {role: 'assistant', content: answer}),
         this.setLoading(false)
-
-        await this.addMessageToDOM(savedAssistantMessage)
-        // }
-
-        // If message is first, make it the title
-        // if(messages.length === 1) db.conversation.update({...this.data, title: content})
     }
 
 }
@@ -123,10 +117,8 @@ export async function uploadFile(file: File, conversationId: string) {
 
     // Todo, maybe we're doing too much here
     const conv = await db.conversation.get(conversationId)
-    console.log({conv})
     if(!conv) return null
     await db.conversation.update({...conv, files: [...conv.files, {id: fileId, name: file.name}]})
-
     return fileId
 }
 
@@ -173,7 +165,6 @@ async function getCompletion(messages: ChatCompletionMessageParam[], conversatio
 
 
 export async function initConversation(id: string) {
-
     const savedConversation = await db.conversation.get(id)
     window.history.replaceState(null, '',window.location.origin + `/c/${id}`);
 
@@ -194,16 +185,19 @@ export async function initConversation(id: string) {
 
     if(lastMessage?.role === "user") {
         try {
-            // get files
+            conversation.setLoading(true)
             const conv = await db.conversation.get(id)
             const hasFiles = !!conv?.files.map(f => f.id).length
             const openMessages = messages.map(m => ({role: m.role, content: m.content} as ChatCompletionUserMessageParam))
             const answer = await getCompletion(openMessages, id, hasFiles)
             const savedAssistantMessage = await db.messages.create(conversation.id, {role: 'assistant', content: answer})
+            conversation.setLoading(false)
             await conversation.addMessageToDOM(savedAssistantMessage)
+
         } catch (err) {
             console.log({err})
             const savedAssistantMessage = await db.messages.create(conversation.id, {role: 'assistant', content: "Oeps, er ging iets mis."})
+            conversation.setLoading(false)
             await conversation.addMessageToDOM(savedAssistantMessage)
         }
     }

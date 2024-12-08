@@ -62,14 +62,14 @@ templ ChatPage(conversationId string, user *schema.GetUserRow) {
 				@components.SideBar(user)
 				// Inner
 				<div id="inner" class="h-screen max-h-[100dvh] md:max-w-[calc(100%-260px)] w-full max-w-full flex flex-col pt-2">
-					@Chat(conversationId)
+					@Chat(conversationId, user)
 				</div>
 			</div>
 		}
 	</html>
 }
 
-templ Chat(id string) {
+templ Chat(id string, user *schema.GetUserRow) {
 	@templ.JSONScript("conversationId", id)
 	<script>
 

@@ -9,7 +9,7 @@ func getAccountTheme(user *schema.GetUserRow) string {
 	if user == nil {
 		return ""
 	}
-	return fmt.Sprintf("<link rel=\"stylesheet\" href=\"static/themes/%s.css\" />", user.AccountID.String)
+	return fmt.Sprintf("<link rel=\"stylesheet\" href=\"/static/themes/%s.css\" />", user.AccountID.String)
 
 }
 func getAccountTitle(user *schema.GetUserRow) string {
