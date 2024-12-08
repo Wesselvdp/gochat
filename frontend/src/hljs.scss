@@ -5,7 +5,8 @@
   padding: 0.5em;
   background: #282a36;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
+  color: #eee;
   ////line-height: 1.5;
   ////overflow-x: auto;
   //margin: 1rem 0;
@@ -84,6 +85,17 @@ pre code.hljs {
   border-radius: 1em;
   margin-bottom: 1em;
 }
+
+//code {
+//
+//
+//
+//
+//  padding: 0.5em;
+//  background: #282a36;
+//  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+//  font-size: 0.8rem;
+//}
 
 // Optional: Add a nice box shadow for depth
 pre code.hljs {

@@ -232,14 +232,32 @@ func (q *Queries) GetFile(ctx context.Context, id string) (File, error) {
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, name, email, account, externalid, createdat, updatedat FROM user
-WHERE id = ? LIMIT 1
+SELECT
+    u.id, u.name, u.email, u.account, u.externalid, u.createdat, u.updatedat,
+    a.id AS account_id,
+    a.name AS account_name
+FROM user u
+         LEFT JOIN account a ON u.account = a.id
+WHERE u.id = ?
+LIMIT 1
 `
 
+type GetUserRow struct {
+	ID          string
+	Name        sql.NullString
+	Email       string
+	Account     string
+	Externalid  sql.NullString
+	Createdat   string
+	Updatedat   string
+	AccountID   sql.NullString
+	AccountName sql.NullString
+}
+
 // Users
-func (q *Queries) GetUser(ctx context.Context, id string) (User, error) {
+func (q *Queries) GetUser(ctx context.Context, id string) (GetUserRow, error) {
 	row := q.db.QueryRowContext(ctx, getUser, id)
-	var i User
+	var i GetUserRow
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
@@ -248,6 +266,8 @@ func (q *Queries) GetUser(ctx context.Context, id string) (User, error) {
 		&i.Externalid,
 		&i.Createdat,
 		&i.Updatedat,
+		&i.AccountID,
+		&i.AccountName,
 	)
 	return i, err
 }

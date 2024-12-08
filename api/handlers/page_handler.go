@@ -39,17 +39,14 @@ func IndexPageHandler() gin.HandlerFunc {
 		defer cancel()
 
 		userID := ctx.GetString("user")
-
 		userService := services.NewUserService()
-
-		//
-		//var account *string
 		user, err := userService.Get(ctx, userID)
+		fmt.Println("user@@@@@", user)
 		if err != nil {
 			fmt.Println("err", err)
 		}
-		account := user.AccountID.String
-		render(ctx, http.StatusOK, views.Index(account))
+
+		render(ctx, http.StatusOK, views.Index(user))
 	}
 }
 
@@ -76,9 +73,15 @@ func ComponentHandler() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		_, cancel := context.WithTimeout(context.Background(), appTimeout)
 		defer cancel()
+		userID := ctx.GetString("user")
+		userService := services.NewUserService()
+		user, err := userService.Get(ctx, userID)
 
+		if err != nil {
+			fmt.Println("err", err)
+		}
 		componentName := ctx.Param("componentName")
-		render(ctx, http.StatusOK, components.Component(componentName))
+		render(ctx, http.StatusOK, components.Component(componentName, user))
 	}
 }
 
@@ -136,7 +139,15 @@ func ChatPageHandler() gin.HandlerFunc {
 			// Serve partial HTML for HTMX requests
 			render(ctx, http.StatusOK, views.Chat(id))
 		} else {
-			render(ctx, http.StatusOK, views.ChatPage(id))
+			userID := ctx.GetString("user")
+			userService := services.NewUserService()
+
+			user, err := userService.Get(ctx, userID)
+
+			if err != nil {
+				fmt.Println("err", err)
+			}
+			render(ctx, http.StatusOK, views.ChatPage(id, user))
 		}
 	}
 }

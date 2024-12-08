@@ -43,10 +43,10 @@ export class textArea extends LitElement {
 
     render() {
         return html`
-            <div>
+        <div>
                 <form
                 >
-                    <textarea @keydown="${this.handleKeyDown}" @input="${this.autoResize}" name="message" class="input shadow w-full bg-background-tertiary" id="growingTextarea" placeholder="Vertel..."></textarea>
+                    <textarea @keydown="${this.handleKeyDown}" @input="${this.autoResize}" name="message" class="input shadow w-full bg-background-tertiary cursor-pointer" id="growingTextarea" placeholder="Hoe kan AĿbert je helpen?"></textarea>
                 </form>
             </div>
         `;

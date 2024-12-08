@@ -73,14 +73,13 @@ class AssistantMessage extends HTMLElement {
         // Get the preserved content
         const markdownContent = pre.textContent;
         pre.remove();
-
+        const root = this.attachShadow({ mode: 'closed' })
         // Create the base structure
-        this.innerHTML = `
+        root.innerHTML = `
             <div class="flex px-5 gap-6 max-w-5xl mb-2">
                 <div>   
-<!--                    <div hx-get="/component/avatar" hx-trigger="load"></div>-->
-                    <div class="kwizLogo" style="background-image: url('/static/brand.svg')"></div>
 
+                   <div hx-get="/component/avatar" />
                 </div>
                 <div>
                     <p class="font-bold mb-4 text-heading">Kwiz AI</p>
@@ -94,20 +93,11 @@ class AssistantMessage extends HTMLElement {
             </div>
         `;
 
+        htmx.process(root) //
 
-
-        // Find the container for markdown content
-        const markdownContainer = this.querySelector('.markdown-content');
-
-        // Apply syntax highlighting to code blocks
-            markdownContainer?.querySelectorAll('pre code').forEach((block) => {
-
-                hljs.highlightElement(block as any);
-            });
 
 
         // Process HTMX
-        (window as any).htmx.process(this);
     }
 }
 
@@ -115,12 +105,7 @@ class AssistantMessage extends HTMLElement {
 
 // MD options
 marked.setOptions({
-    // highlight: function(code, language) {
-    //     if (language && hljs.getLanguage(language)) {
-    //         return hljs.highlight(code, { language: language }).value;
-    //     }
-    //     return hljs.highlightAuto(code).value;
-    // },
+
 
     async: false,
     breaks: false,
@@ -135,6 +120,6 @@ marked.setOptions({
 });
 
 customElements.define('user-message', UserMessage)
-customElements.define('assistant-message', AssistantMessage)
+customElements.define('assistant-message_old', AssistantMessage)
 customElements.define('recent-conversation', RecentConversation)
 

@@ -108,7 +108,7 @@ func (us *UserService) Get(ctx context.Context, id string) (*schema.GetUserRow, 
 		}
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
-
+	user.AccountID.String = "e4694570-f591-4c52-bba9-a5865dc4ba09"
 	return &user, nil
 }
 

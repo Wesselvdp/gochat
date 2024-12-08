@@ -8,9 +8,9 @@ import { initSentry } from './sentry';
 import './components/conversationFiles'
 import './components/userInputForm'
 import './components/textArea'
-import './svg/icon'
-import './svg/iconPaperclip'
-
+import './components/assistantMessage'
+import './svg/icons'
+import htmx from 'htmx.org'
 
 
 // Initialize Sentry before your app

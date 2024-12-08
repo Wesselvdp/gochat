@@ -21,7 +21,6 @@ func afterRequestMiddleware(c *gin.Context) {
 	// Execute the main handler
 	c.Next()
 
-	fmt.Println("running!")
 	podId := os.Getenv("RUNPOD_POD_ID")
 
 	// Check if the request method and path match the target request
@@ -57,7 +56,7 @@ func AddRoutes(r *gin.Engine) {
 
 	//r.Static("/static", "./frontend/dist")templ
 	r.Static("/static", "./frontend/dist")
-	r.Static("/favicon.ico", "./frontend/dist/favicon.ico")
+	r.Static("/e4694570-f591-4c52-bba9-a5865dc4ba09.ico", "./frontend/dist/e4694570-f591-4c52-bba9-a5865dc4ba09.ico")
 	// Auth
 	r.GET("login", handlers.LoginPageHandler())
 	r.GET("/login/microsoft", auth.LoginHandler())

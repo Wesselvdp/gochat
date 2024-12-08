@@ -99,17 +99,21 @@ export class SimpleGreeting extends LitElement {
 
 
 
+
     // Render the UI as a function of component state
     render() {
         return html`
             <div class="bg-background-4 rounded-b-lg px-4 mx-3 mt-[-3px] flex ">
                 <div class="flex-1 flex gap-4 py-2">
                          ${this.files.map((file, i) =>
-                                 
-                             html`<div @click="${() => this._onFileClick(file.id)}" class="px-4 py-1 border border-solid border-slate-600 flex items-center text-slate-100 rounded-md bg-slate-400 cursor-pointer">
+                             html`<div class="group px-4 py-4 my-2 text-sm relative hover:opacity-80 transition-all flex items-center rounded-md bg-background-tertiary cursor-pointer">
                                      ${file.status === 'loading' ? html`<span class="loader"></span>` : ''}
                                      ${file.status === 'success' ? html`<span>${file.name}</span>` : ''}
-                                 <div> `
+                                     <div @click="${() => this._onFileClick(file.id)}" class="group-hover:opacity-100 opacity-0 transition-all absolute top-[-10px] left-[-10px]">
+                                         <icon-remove></icon-remove>
+                                     </div>
+                                 <div> 
+                             `
                          )}                     
                 </div>
                 <div class="py-2 flex items-center">
