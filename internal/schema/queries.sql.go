@@ -12,27 +12,20 @@ import (
 
 const createAccount = `-- name: CreateAccount :one
 INSERT INTO account (
-    id, name, updatedAt, createdAt
+    id, name
 ) VALUES (
-             ?, ?, ?, ?
+             ?, ?
          )
     RETURNING id, name, createdat, updatedat
 `
 
 type CreateAccountParams struct {
-	ID        string
-	Name      string
-	Updatedat string
-	Createdat string
+	ID   string
+	Name string
 }
 
 func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error) {
-	row := q.db.QueryRowContext(ctx, createAccount,
-		arg.ID,
-		arg.Name,
-		arg.Updatedat,
-		arg.Createdat,
-	)
+	row := q.db.QueryRowContext(ctx, createAccount, arg.ID, arg.Name)
 	var i Account
 	err := row.Scan(
 		&i.ID,
@@ -125,9 +118,9 @@ func (q *Queries) CreateFile(ctx context.Context, arg CreateFileParams) (File, e
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO user (
-   id, email, externalId, name, account, updatedAt, createdAt
+   id, email, externalId, name, account
 ) VALUES (
-           ?,  ?, ?, ?, ?, ?, ?
+           ?,  ?, ?, ?, ?
          )
     RETURNING id, name, email, account, externalid, createdat, updatedat
 `
@@ -138,8 +131,6 @@ type CreateUserParams struct {
 	Externalid sql.NullString
 	Name       sql.NullString
 	Account    string
-	Updatedat  string
-	Createdat  string
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
@@ -149,8 +140,6 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		arg.Externalid,
 		arg.Name,
 		arg.Account,
-		arg.Updatedat,
-		arg.Createdat,
 	)
 	var i User
 	err := row.Scan(
@@ -186,10 +175,19 @@ func (q *Queries) DeleteUser(ctx context.Context, id string) error {
 }
 
 const getAccount = `-- name: GetAccount :one
-SELECT a.id, a.name, a.createdat, a.updatedat, ad.account, ad.domain
-FROM account a
-         LEFT JOIN account_domain ad ON ad.account = a.id
-WHERE a.id = ? LIMIT 1
+SELECT
+    a.id, a.name, a.createdat, a.updatedat,
+    GROUP_CONCAT(ad.domain) AS domains
+FROM
+    account a
+        LEFT JOIN
+    account_domain ad
+    ON
+        ad.account = a.id
+WHERE
+    a.id = ?
+GROUP BY
+    a.id
 `
 
 type GetAccountRow struct {
@@ -197,8 +195,7 @@ type GetAccountRow struct {
 	Name      string
 	Createdat string
 	Updatedat string
-	Account   sql.NullString
-	Domain    sql.NullString
+	Domains   string
 }
 
 func (q *Queries) GetAccount(ctx context.Context, id string) (GetAccountRow, error) {
@@ -209,8 +206,7 @@ func (q *Queries) GetAccount(ctx context.Context, id string) (GetAccountRow, err
 		&i.Name,
 		&i.Createdat,
 		&i.Updatedat,
-		&i.Account,
-		&i.Domain,
+		&i.Domains,
 	)
 	return i, err
 }

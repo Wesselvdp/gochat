@@ -1,8 +1,18 @@
 -- name: GetAccount :one
-SELECT a.*, ad.*
-FROM account a
-         LEFT JOIN account_domain ad ON ad.account = a.id
-WHERE a.id = ? LIMIT 1;
+SELECT
+    a.*,
+    GROUP_CONCAT(ad.domain) AS domains
+FROM
+    account a
+        LEFT JOIN
+    account_domain ad
+    ON
+        ad.account = a.id
+WHERE
+    a.id = ?
+GROUP BY
+    a.id;
+
 
 -- name: GetAccountByDomain :one
 SELECT a.id
@@ -15,9 +25,9 @@ SELECT * FROM account;
 
 -- name: CreateAccount :one
 INSERT INTO account (
-    id, name, updatedAt, createdAt
+    id, name
 ) VALUES (
-             ?, ?, ?, ?
+             ?, ?
          )
     RETURNING *;
 
@@ -57,9 +67,9 @@ SELECT * FROM user;
 
 -- name: CreateUser :one
 INSERT INTO user (
-   id, email, externalId, name, account, updatedAt, createdAt
+   id, email, externalId, name, account
 ) VALUES (
-           ?,  ?, ?, ?, ?, ?, ?
+           ?,  ?, ?, ?, ?
          )
     RETURNING *;
 

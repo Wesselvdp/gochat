@@ -51,3 +51,4 @@ sqlite3:
 local_db.db
 delete.txt
 file.txt
+/server_db
