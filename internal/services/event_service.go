@@ -19,12 +19,13 @@ const (
 	EventLogin     EventType = "login"
 	EventMessage   EventType = "message"
 	UnknownAccount EventType = "unknownAccount"
+	Evil           EventType = "evil"
 )
 
 // IsValid checks if the event type is valid
 func (e EventType) IsValid() bool {
 	switch e {
-	case EventLogin, EventMessage, UnknownAccount:
+	case EventLogin, EventMessage, UnknownAccount, Evil:
 		return true
 	}
 	return false

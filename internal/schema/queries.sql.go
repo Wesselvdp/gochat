@@ -177,7 +177,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id string) error {
 const getAccount = `-- name: GetAccount :one
 SELECT
     a.id, a.name, a.createdat, a.updatedat,
-    GROUP_CONCAT(ad.domain) AS domains
+    IFNULL(GROUP_CONCAT(ad.domain), '') AS domains
 FROM
     account a
         LEFT JOIN
@@ -195,7 +195,7 @@ type GetAccountRow struct {
 	Name      string
 	Createdat string
 	Updatedat string
-	Domains   string
+	Domains   interface{}
 }
 
 func (q *Queries) GetAccount(ctx context.Context, id string) (GetAccountRow, error) {

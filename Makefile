@@ -58,6 +58,9 @@ create-account:
 get-account:
 	bash scripts/get_account.sh $(URL) $(ID)
 
+get-user:
+	bash scripts/get_user.sh $(URL) $(ID)
+
 sqlc:
 	cd db/sqlc && sqlc generate && cd ../../
 

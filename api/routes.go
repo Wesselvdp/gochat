@@ -79,6 +79,8 @@ func AddRoutes(r *gin.Engine) {
 		protected.POST("file/upload", handlers.FileUploadHandler())
 		protected.POST("file/delete", handlers.FileDeleteHandler())
 		protected.POST("conversation/delete", handlers.PartitionDeleteHandler())
+		protected.GET("impersonate/:id", handlers.ImpersonateIndexPageHandler())
+
 	}
 
 	admin := r.Group("patron")
@@ -88,8 +90,10 @@ func AddRoutes(r *gin.Engine) {
 	accountService := services.NewAccountService()
 	accountHandlers := handlers.NewAccountHandlers(accountService)
 	{
+		admin.GET("user/:id", accountHandlers.GetUser())
 		admin.GET("account/:id", accountHandlers.GetAccount())
 		admin.POST("account/create", accountHandlers.CreateAccount())
 		admin.POST("account/accountdomains/create", accountHandlers.AddDomain())
+
 	}
 }

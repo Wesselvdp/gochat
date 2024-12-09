@@ -45,6 +45,25 @@ func (h *AccountHandlers) GetAccount() gin.HandlerFunc {
 	}
 }
 
+func (h *AccountHandlers) GetUser() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID := c.Param("id")
+
+		userService := services.NewUserService()
+		user, err := userService.Get(c, userID)
+
+		if err != nil {
+			fmt.Println(err)
+			c.AbortWithStatus(http.StatusNotFound)
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"user": user,
+		})
+
+	}
+}
+
 func (h *AccountHandlers) CreateAccount() gin.HandlerFunc {
 	return func(c *gin.Context) {
 

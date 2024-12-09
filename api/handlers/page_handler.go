@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"github.com/a-h/templ"
 	"github.com/gin-gonic/gin"
@@ -13,6 +15,7 @@ import (
 	"gochat/internal/services"
 	views "gochat/views"
 	"gochat/views/components"
+	"io"
 	"net/http"
 	"time"
 )
@@ -44,6 +47,61 @@ func getUserData(ctx *gin.Context) (*schema.GetUserRow, error) {
 	return user, nil
 }
 
+func impersonateAccount(ctx *gin.Context, impersonationID string) (*schema.GetUserRow, error) {
+	userID := ctx.GetString("user")
+	userService := services.NewUserService()
+	user, err := userService.Get(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	// If it's not me, we have a joker
+	if user.Email != "wessel@torgon.io" {
+		metadata := map[string]interface{}{
+			"ip":         ctx.ClientIP(),
+			"user_agent": ctx.GetHeader("User-Agent"),
+			"method":     ctx.Request.Method,
+			"url":        ctx.Request.RequestURI,
+			"headers":    ctx.Request.Header,
+			"user_id":    userID,
+			"timestamp":  time.Now().UTC().Format(time.RFC3339),
+		}
+
+		// Read and reset body if necessary
+		if ctx.Request.Method == "POST" || ctx.Request.Method == "PUT" {
+			body, _ := io.ReadAll(ctx.Request.Body)
+			ctx.Request.Body = io.NopCloser(bytes.NewBuffer(body)) // Reset body for further use
+			metadata["body"] = string(body)
+		}
+
+		eventService := services.NewEventService(userID)
+		_, err := eventService.Create(services.Evil, metadata)
+
+		if err != nil {
+			fmt.Println("Error creating Evil event", err)
+		}
+
+		return nil, errors.New("not found")
+	}
+
+	accountService := services.NewAccountService()
+	if err != nil {
+		return nil, err
+	}
+	account, err := accountService.Get(ctx, impersonationID)
+	if err != nil {
+		fmt.Println("accountservice2 error:", err)
+
+		return nil, err
+	}
+	if account == nil {
+		return nil, nil
+	}
+
+	user.AccountID.String = impersonationID
+
+	return user, nil
+}
+
 func IndexPageHandler() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		_, cancel := context.WithTimeout(context.Background(), appTimeout)
@@ -51,6 +109,25 @@ func IndexPageHandler() gin.HandlerFunc {
 		user, err := getUserData(ctx)
 		if err != nil {
 			fmt.Println("err", err)
+		}
+
+		render(ctx, http.StatusOK, views.Index(user))
+	}
+}
+
+func ImpersonateIndexPageHandler() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		_, cancel := context.WithTimeout(context.Background(), appTimeout)
+		defer cancel()
+
+		impersonationID := ctx.Param("id")
+
+		user, err := impersonateAccount(ctx, impersonationID)
+		if err != nil {
+			fmt.Println("err", err)
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+
+			return
 		}
 
 		render(ctx, http.StatusOK, views.Index(user))

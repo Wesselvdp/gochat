@@ -1,7 +1,7 @@
 -- name: GetAccount :one
 SELECT
     a.*,
-    GROUP_CONCAT(ad.domain) AS domains
+    IFNULL(GROUP_CONCAT(ad.domain), '') AS domains
 FROM
     account a
         LEFT JOIN
