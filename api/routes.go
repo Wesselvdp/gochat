@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gochat/api/handlers"
 	"gochat/internal/auth"
+	"gochat/internal/services"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -78,6 +79,18 @@ func AddRoutes(r *gin.Engine) {
 		protected.POST("file/upload", handlers.FileUploadHandler())
 		protected.POST("file/delete", handlers.FileDeleteHandler())
 		protected.POST("conversation/delete", handlers.PartitionDeleteHandler())
+	}
+
+	admin := r.Group("patron")
+	authConfig := auth.LoadAdminAuthConfig()
+	admin.Use(auth.AdminAuthMiddleware(authConfig))
+
+	accountService := services.NewAccountService()
+	accountHandlers := handlers.NewAccountHandlers(accountService)
+	{
+		admin.GET("account/:id", accountHandlers.GetAccount())
+		admin.POST("account/create", accountHandlers.CreateAccount())
+		admin.POST("account/accountdomains/create", accountHandlers.AddDomain())
 	}
 
 }

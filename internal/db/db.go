@@ -16,7 +16,7 @@ func Init() (*schema.Queries, *sql.DB, error) {
 		return nil, nil, fmt.Errorf("DB_PATH environment variable not set")
 	}
 
-	database, err := sql.Open("sqlite3", dbPath)
+	database, err := sql.Open("sqlite3", fmt.Sprintf("file:%s?_foreign_keys=on", dbPath))
 
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to open database: %w", err)

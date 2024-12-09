@@ -151,7 +151,6 @@ func ChatPageHandler() gin.HandlerFunc {
 			// Serve partial HTML for HTMX requests
 			render(ctx, http.StatusOK, views.Chat(conversationID, user))
 		} else {
-
 			render(ctx, http.StatusOK, views.ChatPage(conversationID, user))
 		}
 	}

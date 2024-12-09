@@ -43,6 +43,27 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (A
 	return i, err
 }
 
+const createAccountDomain = `-- name: CreateAccountDomain :one
+INSERT INTO account_domain (
+    account, domain
+) VALUES (
+             ?, ?
+         )
+    RETURNING account, domain
+`
+
+type CreateAccountDomainParams struct {
+	Account string
+	Domain  string
+}
+
+func (q *Queries) CreateAccountDomain(ctx context.Context, arg CreateAccountDomainParams) (AccountDomain, error) {
+	row := q.db.QueryRowContext(ctx, createAccountDomain, arg.Account, arg.Domain)
+	var i AccountDomain
+	err := row.Scan(&i.Account, &i.Domain)
+	return i, err
+}
+
 const createEvent = `-- name: CreateEvent :one
 
 INSERT INTO event (
@@ -165,18 +186,31 @@ func (q *Queries) DeleteUser(ctx context.Context, id string) error {
 }
 
 const getAccount = `-- name: GetAccount :one
-SELECT id, name, createdat, updatedat FROM account
-WHERE id = ? LIMIT 1
+SELECT a.id, a.name, a.createdat, a.updatedat, ad.account, ad.domain
+FROM account a
+         LEFT JOIN account_domain ad ON ad.account = a.id
+WHERE a.id = ? LIMIT 1
 `
 
-func (q *Queries) GetAccount(ctx context.Context, id string) (Account, error) {
+type GetAccountRow struct {
+	ID        string
+	Name      string
+	Createdat string
+	Updatedat string
+	Account   sql.NullString
+	Domain    sql.NullString
+}
+
+func (q *Queries) GetAccount(ctx context.Context, id string) (GetAccountRow, error) {
 	row := q.db.QueryRowContext(ctx, getAccount, id)
-	var i Account
+	var i GetAccountRow
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
 		&i.Createdat,
 		&i.Updatedat,
+		&i.Account,
+		&i.Domain,
 	)
 	return i, err
 }

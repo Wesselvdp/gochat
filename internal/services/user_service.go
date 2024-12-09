@@ -39,7 +39,6 @@ func NewUserService() *UserService {
 		fmt.Println("Error initializing queries for user service: " + err.Error())
 		return nil
 	}
-
 	return &UserService{queries: queries}
 }
 

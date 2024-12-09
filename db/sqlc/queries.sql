@@ -1,6 +1,8 @@
 -- name: GetAccount :one
-SELECT * FROM account
-WHERE id = ? LIMIT 1;
+SELECT a.*, ad.*
+FROM account a
+         LEFT JOIN account_domain ad ON ad.account = a.id
+WHERE a.id = ? LIMIT 1;
 
 -- name: GetAccountByDomain :one
 SELECT a.id
@@ -16,6 +18,14 @@ INSERT INTO account (
     id, name, updatedAt, createdAt
 ) VALUES (
              ?, ?, ?, ?
+         )
+    RETURNING *;
+
+-- name: CreateAccountDomain :one
+INSERT INTO account_domain (
+    account, domain
+) VALUES (
+             ?, ?
          )
     RETURNING *;
 
