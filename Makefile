@@ -10,7 +10,7 @@ PRODUCTION_URL = https://app.torgon.io
 STAGING_URL = https://staging.torgon.io
 DEV_URL = http://localhost:8080
 
-DOKPLOY_APP := $(if $(filter $(ENV),production),"newproject-gochat-f51808","gochat-app-staging-bd0bf7")
+DOKPLOY_APP := $(if $(filter $(ENV),production),newproject-gochat-f51808,gochat-app-staging-bd0bf7)
 DB_PATH = /etc/dokploy/compose/$(DOKPLOY_APP)/files/sqlite/database.db
 # Determine URL based on the environment
 URL := $(if $(filter $(ENV),production),$(PRODUCTION_URL),$(if $(filter $(ENV),staging),$(STAGING_URL),$(if $(filter $(ENV),development),$(DEV_URL), "") ))
@@ -43,9 +43,11 @@ download-db:
 upload-db:
 	@$(PROD_WARNING)
 	@echo "Uploading with env: $(ENV)"
+
 	@echo "creating Backup"
 	ssh root@142.93.224.213 "cp $(DB_PATH) $(DB_PATH).$$(date +%Y%m%d_%H%M%S).backup"
-	scp ./local_db.db root@142.93.224.213:$(DB_PATH)
+
+	scp server_db/${path} root@142.93.224.213:$(DB_PATH)
 
 switch-db:
 	@$(PROD_WARNING)
