@@ -37,6 +37,20 @@ func render(ctx *gin.Context, status int, template templ.Component) error {
 	return template.Render(ctx.Request.Context(), ctx.Writer)
 }
 
+// TODO move somewhere else
+func notify(str string) {
+	url := "https://ntfy.sh/alberttorgon"
+	data := []byte(str)
+
+	resp, err := http.Post(url, "text/plain", bytes.NewBuffer(data))
+	if err != nil {
+		fmt.Println("Error making request:", err)
+		return
+	}
+	defer resp.Body.Close()
+
+}
+
 func getUserData(ctx *gin.Context) (*schema.GetUserRow, error) {
 	userID := ctx.GetString("user")
 	userService := services.NewUserService()
@@ -173,43 +187,69 @@ func ComponentHandler() gin.HandlerFunc {
 
 func SendMessageHandler() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		_, cancel := context.WithTimeout(context.Background(), appTimeout)
-		defer cancel()
+		// Start timing
+		start := time.Now()
+		// Prepare variables
 		var aiResponse string
 		var data UserRequestData
-		if err := ctx.ShouldBindJSON(&data); err != nil {
+		var err error
+		var errorMessage string
+
+		// Capture user ID
+		userID, exists := ctx.Get("user")
+
+		defer func() {
+			if exists {
+
+				eventService := services.NewEventService(userID.(string))
+				_, logErr := eventService.Create(services.EventMessage, services.EventMetadata{
+					"conversation":  data.ConversationID,
+					"hasFiles":      data.HasFiles,
+					"err":           errorMessage,
+					"executionTime": time.Since(start).Seconds(), // Full handler duration
+				})
+
+				if errorMessage != "" {
+					str := fmt.Sprintf("error in sendMessage: %s", errorMessage)
+					notify(str)
+				}
+
+				if logErr != nil {
+					// Consider using a proper logger in production
+					fmt.Printf("Failed to log execution time: %v\n", logErr)
+				}
+			}
+		}()
+
+		// Bind JSON and handle potential error
+		if err = ctx.ShouldBindJSON(&data); err != nil {
+			errorMessage = err.Error()
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		userID, exists := ctx.Get("user")
-		if exists {
-			eventService := services.NewEventService(userID.(string))
-			eventService.Create(services.EventMessage, map[string]interface{}{
-				"conversation": data.ConversationID,
-			})
-		}
-
-		var err error
+		// Process message based on file existence
 		if data.HasFiles {
 			aiResponse, err = rag.GetRaggedAnswer(ctx, data.Messages, data.ConversationID)
 		} else {
-			// No files, use original messages
 			aiResponse, err = ai.GetCompletion(data.Messages)
 		}
-
+		// Handle potential processing error
 		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{"content": "Oeps, er is iets mis. We sturen er een ontwikkelaar op af", "error": err.Error()})
-		} else {
-			//fmt.Println(aiResponse)
-			response := gin.H{
-				"content": aiResponse,
-				"data":    data.Messages,
-			}
-			ctx.JSON(http.StatusOK, response)
-
+			errorMessage = err.Error()
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"content": "Oeps, er is iets mis. We sturen er een ontwikkelaar op af",
+				"error":   err.Error(),
+			})
+			return
 		}
 
+		// Return successful response
+		response := gin.H{
+			"content": aiResponse,
+			"data":    data.Messages,
+		}
+		ctx.JSON(http.StatusOK, response)
 	}
 }
 

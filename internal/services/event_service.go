@@ -14,6 +14,7 @@ type EventService struct {
 }
 
 type EventType string
+type EventMetadata map[string]interface{}
 
 const (
 	EventLogin     EventType = "login"

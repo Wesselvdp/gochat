@@ -82,7 +82,7 @@ class AssistantMessage extends HTMLElement {
                    <div hx-get="/component/avatar" />
                 </div>
                 <div>
-                    <p class="font-bold mb-4 text-heading">Kwiz AI</p>
+                    <p class="font-bold mb-4 text-heading">AĿbert</p>
                     <div class="max-w-2xl markdown-content">${marked.parse(markdownContent, {
                             breaks: true,  // Enable line breaks
                             gfm: true
