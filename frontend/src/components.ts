@@ -1,8 +1,6 @@
-import db from "./db";
-import {marked} from "marked";
-import hljs from 'highlight.js'
 
-import {createInStorage, removeConversation, uploadFile} from "./conversation";
+
+import {removeConversation} from "./conversation";
 class UserMessage extends HTMLElement {
     constructor() {
         super()
@@ -61,65 +59,7 @@ class RecentConversation extends HTMLElement {
 
 
 
-class AssistantMessage extends HTMLElement {
-    async connectedCallback() {
-        // Create a temporary pre element to preserve formatting
-        const pre = document.createElement('pre');
-        pre.style.display = 'none';
-        pre.textContent = this.innerHTML;
-        this.innerHTML = '';
-        this.appendChild(pre);
-
-        // Get the preserved content
-        const markdownContent = pre.textContent;
-        pre.remove();
-        const root = this.attachShadow({ mode: 'closed' })
-        // Create the base structure
-        root.innerHTML = `
-            <div class="flex px-5 gap-6 max-w-5xl mb-2">
-                <div>   
-
-                   <div hx-get="/component/avatar" />
-                </div>
-                <div>
-                    <p class="font-bold mb-4 text-heading">AĿbert</p>
-                    <div class="max-w-2xl markdown-content">${marked.parse(markdownContent, {
-                            breaks: true,  // Enable line breaks
-                            gfm: true
-            
-                        })}
-                    </div>
-                </div>
-            </div>
-        `;
-
-        htmx.process(root) //
-
-
-
-        // Process HTMX
-    }
-}
-
-
-
-// MD options
-marked.setOptions({
-
-
-    async: false,
-    breaks: false,
-    extensions: null,
-    gfm: true,
-    hooks: null,
-    pedantic: false,
-    silent: false,
-    tokenizer: null,
-    walkTokens: null
-
-});
 
 customElements.define('user-message', UserMessage)
-customElements.define('assistant-message_old', AssistantMessage)
 customElements.define('recent-conversation', RecentConversation)
 

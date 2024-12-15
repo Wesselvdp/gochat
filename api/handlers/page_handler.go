@@ -80,6 +80,8 @@ func impersonateAccount(ctx *gin.Context, impersonationID string) (*schema.GetUs
 			"timestamp":  time.Now().UTC().Format(time.RFC3339),
 		}
 
+		notify("joker alert")
+
 		// Read and reset body if necessary
 		if ctx.Request.Method == "POST" || ctx.Request.Method == "PUT" {
 			body, _ := io.ReadAll(ctx.Request.Body)

@@ -4,5 +4,5 @@ CREATE TABLE IF NOT EXISTS file (
    createdAt TEXT NOT NULL DEFAULT (datetime('now')),
    updatedAt TEXT NOT NULL DEFAULT (datetime('now')),
    owner TEXT NOT NULL,
-   FOREIGN KEY (owner) REFERENCES account(id)
+   FOREIGN KEY (owner) REFERENCES user(id)
 );

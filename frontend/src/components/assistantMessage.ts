@@ -84,7 +84,7 @@ export class AssistantMessage extends LitElement {
                     <div hx-get="/component/avatar"></div>
                 </div>
                 <div>
-                    <p class="font-bold mb-4 text-heading">Kwiz AI</p>
+                    <p class="font-bold mb-4 text-heading">AĿbert</p>
                     <div class="max-w-2xl markdown-content">
                         ${unsafeHTML(this.parsedMarkdown)}
                     </div>
