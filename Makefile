@@ -14,7 +14,7 @@ DOKPLOY_APP := $(if $(filter $(ENV),production),newproject-gochat-f51808,gochat-
 DB_PATH = /etc/dokploy/compose/$(DOKPLOY_APP)/files/sqlite/database.db
 # Determine URL based on the environment
 URL := $(if $(filter $(ENV),production),$(PRODUCTION_URL),$(if $(filter $(ENV),staging),$(STAGING_URL),$(if $(filter $(ENV),development),$(DEV_URL), "") ))
-
+DOCKER_CONTAINER := $(if $(filter $(ENV),production),027491f7b37b,$(if $(filter $(ENV),staging),c45bad8691e1,$(if $(filter $(ENV),development),$(DEV_URL), "") ))
 # Macro for production warning
 PROD_WARNING = \
 	if [ "$(ENV)" = "production" ]; then \
@@ -34,6 +34,7 @@ status:
 	@echo "URL: $(URL)"
 	@echo "APP: $(DOKPLOY_APP)"
 	@echo "DB_PATH: $(DB_PATH)"
+	@echo "DOCKER_CONTAINER: $(DOCKER_CONTAINER)"
 
 download-db:
 	@echo "Downloading with env: $(ENV)"
@@ -65,6 +66,30 @@ get-user:
 
 sqlc:
 	cd db/sqlc && sqlc generate && cd ../../
+
+migrate-goto:
+	@$(PROD_WARNING)
+	#echo "docker exec -it $(DOCKER_CONTAINER) migrate -path migrations -database sqlite3:///data/database.db?_foreign_keys=on goto $(number)"
+	ssh -t root@142.93.224.213 "docker exec -it $(DOCKER_CONTAINER) migrate -path db/migrations -database sqlite3:///data/database.db?_foreign_keys=on goto $(number)"
+
+migrate-down:
+	@$(PROD_WARNING)
+	#echo "docker exec -it $(DOCKER_CONTAINER) migrate -path migrations -database sqlite3:///data/database.db?_foreign_keys=on goto $(number)"
+	ssh -t root@142.93.224.213 "docker exec -it $(DOCKER_CONTAINER) migrate -path db/migrations -database sqlite3:///data/database.db?_foreign_keys=on down $(number)"
+
+migrate-up:
+	@$(PROD_WARNING)
+	#echo "docker exec -it $(DOCKER_CONTAINER) migrate -path migrations -database sqlite3:///data/database.db?_foreign_keys=on goto $(number)"
+	ssh -t root@142.93.224.213 "docker exec -it $(DOCKER_CONTAINER) migrate -path db/migrations -database sqlite3:///data/database.db?_foreign_keys=on up $(number)"
+
+migrate-version:
+	@$(PROD_WARNING)
+	#echo "docker exec -it $(DOCKER_CONTAINER) migrate -path migrations -database sqlite3:///data/database.db?_foreign_keys=on goto $(number)"
+	ssh -t root@142.93.224.213 "docker exec -it $(DOCKER_CONTAINER) migrate -path db/migrations -database sqlite3:///data/database.db?_foreign_keys=on version"
+migrate-force:
+	@$(PROD_WARNING)
+	#echo "docker exec -it $(DOCKER_CONTAINER) migrate -path migrations -database sqlite3:///data/database.db?_foreign_keys=on goto $(number)"
+	ssh -t root@142.93.224.213 "docker exec -it $(DOCKER_CONTAINER) migrate -v -path db/migrations -database sqlite3:///data/database.db?_foreign_keys=on force $(number)"
 
 
 

@@ -119,7 +119,7 @@ func initMilvusClient(ctx context.Context) (client.Client, error) {
 
 // SaveDocuments Saves new documents to the Vector DB's conversation partition
 func SaveDocuments(ctx context.Context, docs []Document, fileID string, conversationID string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
 	milvusClient, err := initMilvusClient(ctx)
