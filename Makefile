@@ -62,6 +62,10 @@ create-account-domain:
 	@$(PROD_WARNING)
 	bash scripts/create_domain.sh $(URL) $(ACCOUNT) $(DOMAIN)
 
+delete-account-domain:
+	@$(PROD_WARNING)
+	bash scripts/delete_domain.sh $(URL) $(DOMAIN)
+
 get-account:
 	bash scripts/get_account.sh $(URL) $(ID)
 

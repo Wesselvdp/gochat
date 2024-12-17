@@ -164,6 +164,16 @@ func (q *Queries) DeleteAccount(ctx context.Context, id string) error {
 	return err
 }
 
+const deleteAccountDomain = `-- name: DeleteAccountDomain :exec
+DELETE FROM account_domain
+WHERE domain = ?1
+`
+
+func (q *Queries) DeleteAccountDomain(ctx context.Context, domain string) error {
+	_, err := q.db.ExecContext(ctx, deleteAccountDomain, domain)
+	return err
+}
+
 const deleteUser = `-- name: DeleteUser :exec
 DELETE FROM user
 WHERE id = ?

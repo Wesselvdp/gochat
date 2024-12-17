@@ -20,6 +20,10 @@ FROM account a
          JOIN account_domain ad ON a.id = ad.account
 WHERE ad.domain = ?;
 
+-- name: DeleteAccountDomain :exec
+DELETE FROM account_domain
+WHERE domain = sqlc.arg(domain);
+
 -- name: ListAccount :many
 SELECT * FROM account;
 

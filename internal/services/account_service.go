@@ -48,3 +48,11 @@ func (as *AccountService) CreateAccountDomain(c context.Context, params schema.C
 	}
 	return &accountDomain, nil
 }
+
+func (as *AccountService) DeleteAccountDomain(c context.Context, domain string) error {
+	err := as.queries.DeleteAccountDomain(c, domain)
+	if err != nil {
+		return err
+	}
+	return nil
+}

@@ -5,7 +5,7 @@ import (
 	"gochat/internal/schema"
 )
 
-func getAccountTheme(user *schemaschema.GetUserRow) string {
+func getAccountTheme(user *schema.GetUserRow) string {
 	if user == nil {
 		return ""
 	}
@@ -75,13 +75,18 @@ templ Component(componentName string, user *schema.GetUserRow) {
 
 // TODO: fix this hardcoded account shit
 func getAvatar(accountID string) string {
-	if accountID == "A1234" {
+
+	if accountID == "07edc5c8-b5a9-4c11-8f2b-31e0a4c5b686" {
 		return fmt.Sprintf("url('/static/avatars/%s.png');", accountID)
 	}
 	if accountID == "e4694570-f591-4c52-bba9-a5865dc4ba09" {
 		return fmt.Sprintf("url('/static/avatars/%s.svg');", accountID)
 	}
-	return ""
+	if accountID == "87d75e8f-4c88-4ff4-ba49-c3ee28263e56" {
+		return "url('/static/avatars/df_logo.png')"
+	}
+
+	return "url('/static/avatars/albert.png')"
 }
 
 css primaryClassName(id string) {
@@ -127,7 +132,7 @@ templ SideBar(user *schema.GetUserRow) {
 			<button>
 				@Avatar(user)
 			</button>
-			<button hx-get="/component/newchat" hx-push-url="/" hx-target="#inner" class="flex mb-2 items-center gap-8 justify-between">
+			<button hx-get="/component/newchat" hx-push-url="/" hx-target="#inner" class="flex items-center gap-8 justify-between">
 				<span class="whitespace-pre">Nieuw gesprek</span>
 				<span class="material-symbols-outlined">
 					edit
