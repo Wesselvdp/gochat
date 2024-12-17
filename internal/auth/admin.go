@@ -107,6 +107,7 @@ func LoadAdminAuthConfig() AdminAuthConfig {
 	return AdminAuthConfig{
 		APIKey: os.Getenv("ADMIN_API_KEY"),
 		AllowedIPs: []string{
+			"92.68.199.197",      // Breuer Intraval
 			"178.198.205.242/32", // localhost IPv4
 			"::1/128",            // localhost IPv6
 		},
