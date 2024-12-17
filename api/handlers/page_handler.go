@@ -132,7 +132,6 @@ func IndexPageHandler() gin.HandlerFunc {
 }
 
 func ImpersonateIndexPageHandler() gin.HandlerFunc {
-	p
 	return func(ctx *gin.Context) {
 		_, cancel := context.WithTimeout(context.Background(), appTimeout)
 		defer cancel()
