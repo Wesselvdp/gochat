@@ -104,13 +104,32 @@ func (h *AccountHandlers) AddDomain() gin.HandlerFunc {
 		}
 
 		newDomain, err := h.accountService.CreateAccountDomain(c, schema.CreateAccountDomainParams{Domain: params.Domain, Account: params.AccountID})
+
+		if err != nil {
+			fmt.Println(err)
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"domain": newDomain,
+		})
+	}
+}
+
+func (h *AccountHandlers) DeleteAccountDomain() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		domain := c.Param("domain")
+
+		err := h.accountService.DeleteAccountDomain(c, domain)
 		if err != nil {
 			fmt.Println(err)
 			c.AbortWithStatus(http.StatusInternalServerError)
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{
-			"domain": newDomain,
+			"message": "successfully deleted domain: " + domain,
 		})
 	}
 }
