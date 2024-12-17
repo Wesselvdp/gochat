@@ -14,7 +14,7 @@ DOKPLOY_APP := $(if $(filter $(ENV),production),newproject-gochat-f51808,gochat-
 DB_PATH = /etc/dokploy/compose/$(DOKPLOY_APP)/files/sqlite/database.db
 # Determine URL based on the environment
 URL := $(if $(filter $(ENV),production),$(PRODUCTION_URL),$(if $(filter $(ENV),staging),$(STAGING_URL),$(if $(filter $(ENV),development),$(DEV_URL), "") ))
-DOCKER_CONTAINER := $(if $(filter $(ENV),production),027491f7b37b,$(if $(filter $(ENV),staging),c45bad8691e1,$(if $(filter $(ENV),development),$(DEV_URL), "") ))
+DOCKER_CONTAINER := $(if $(filter $(ENV),production),adfed9fb57ef,$(if $(filter $(ENV),staging),c45bad8691e1,$(if $(filter $(ENV),development),$(DEV_URL), "") ))
 # Macro for production warning
 PROD_WARNING = \
 	if [ "$(ENV)" = "production" ]; then \
@@ -57,6 +57,10 @@ switch-db:
 create-account:
 	@$(PROD_WARNING)
 	bash scripts/create_account.sh $(URL) $(NAME)
+
+create-account-domain:
+	@$(PROD_WARNING)
+	bash scripts/create_domain.sh $(URL) $(ACCOUNT) $(DOMAIN)
 
 get-account:
 	bash scripts/get_account.sh $(URL) $(ID)
