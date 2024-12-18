@@ -58,6 +58,12 @@ FROM user u
 WHERE u.id = ?
 LIMIT 1;
 
+-- name: UpdateUserAccount :exec
+UPDATE user
+SET account = sqlc.arg(accountID),
+    updatedAt = datetime('now')
+WHERE id = sqlc.arg(userID);
+
 -- name: GetUserByEmail :one
 SELECT * FROM user
 WHERE email = ? LIMIT 1;

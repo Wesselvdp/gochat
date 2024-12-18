@@ -95,5 +95,6 @@ func AddRoutes(r *gin.Engine) {
 		admin.POST("account/create", accountHandlers.CreateAccount())
 		admin.POST("account/accountdomains/create", accountHandlers.AddDomain())
 		admin.GET("account/accountdomains/delete/:domain", accountHandlers.DeleteAccountDomain())
+		admin.POST("account/change-user-account", accountHandlers.ChangeUserAccount())
 	}
 }

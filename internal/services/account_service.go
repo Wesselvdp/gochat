@@ -56,3 +56,11 @@ func (as *AccountService) DeleteAccountDomain(c context.Context, domain string) 
 	}
 	return nil
 }
+
+func (as *AccountService) UpdateUserAccount(c context.Context, params schema.UpdateUserAccountParams) error {
+	err := as.queries.UpdateUserAccount(c, params)
+	if err != nil {
+		return err
+	}
+	return nil
+}

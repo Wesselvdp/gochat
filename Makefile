@@ -66,6 +66,10 @@ delete-account-domain:
 	@$(PROD_WARNING)
 	bash scripts/delete_domain.sh $(URL) $(DOMAIN)
 
+change-user-account:
+	@$(PROD_WARNING)
+	bash scripts/change_user_account.sh $(URL) $(ACCOUNT)
+
 get-account:
 	bash scripts/get_account.sh $(URL) $(ID)
 
@@ -94,6 +98,7 @@ migrate-version:
 	@$(PROD_WARNING)
 	#echo "docker exec -it $(DOCKER_CONTAINER) migrate -path migrations -database sqlite3:///data/database.db?_foreign_keys=on goto $(number)"
 	ssh -t root@142.93.224.213 "docker exec -it $(DOCKER_CONTAINER) migrate -path db/migrations -database sqlite3:///data/database.db?_foreign_keys=on version"
+
 migrate-force:
 	@$(PROD_WARNING)
 	#echo "docker exec -it $(DOCKER_CONTAINER) migrate -path migrations -database sqlite3:///data/database.db?_foreign_keys=on goto $(number)"

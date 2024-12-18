@@ -133,3 +133,28 @@ func (h *AccountHandlers) DeleteAccountDomain() gin.HandlerFunc {
 		})
 	}
 }
+
+func (h *AccountHandlers) ChangeUserAccount() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var params schema.UpdateUserAccountParams
+		if err := c.ShouldBindJSON(&params); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+
+		err := h.accountService.UpdateUserAccount(c, params)
+
+		if err != nil {
+			fmt.Println(err)
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+
+		// TODO, even when no user is updated it returns this
+		c.JSON(http.StatusOK, gin.H{
+			"message": fmt.Sprintf("changed account successfully"),
+		})
+	}
+}
