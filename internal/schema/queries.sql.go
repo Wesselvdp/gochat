@@ -423,15 +423,15 @@ const updateUserAccount = `-- name: UpdateUserAccount :exec
 UPDATE user
 SET account = ?1,
     updatedAt = datetime('now')
-WHERE id = ?2
+WHERE email = ?2
 `
 
 type UpdateUserAccountParams struct {
 	Accountid string
-	Userid    string
+	Useremail string
 }
 
 func (q *Queries) UpdateUserAccount(ctx context.Context, arg UpdateUserAccountParams) error {
-	_, err := q.db.ExecContext(ctx, updateUserAccount, arg.Accountid, arg.Userid)
+	_, err := q.db.ExecContext(ctx, updateUserAccount, arg.Accountid, arg.Useremail)
 	return err
 }

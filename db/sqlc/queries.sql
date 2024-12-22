@@ -62,7 +62,7 @@ LIMIT 1;
 UPDATE user
 SET account = sqlc.arg(accountID),
     updatedAt = datetime('now')
-WHERE id = sqlc.arg(userID);
+WHERE email = sqlc.arg(userEmail);
 
 -- name: GetUserByEmail :one
 SELECT * FROM user

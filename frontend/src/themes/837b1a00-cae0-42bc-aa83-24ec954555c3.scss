@@ -1,0 +1,16 @@
+// Bureau Omlo
+:root {
+    --text-color: rgb(0, 51, 96);
+
+    --primary-brand-color: rgb(96, 166, 46);
+    --secondary-brand-color: var(--text-color);
+
+
+    --primary-background-color: #ffffff;
+    --secondary-background-color: #f8f9fa;
+    --tertiary-background-color: #f1f3f5;
+    --4-background-color: #dadcde;
+
+    --chat-bubble: var(--tertiary-background-color);
+    --heading-color: var(--primary-brand-color);
+}

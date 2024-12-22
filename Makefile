@@ -56,7 +56,7 @@ switch-db:
 
 create-account:
 	@$(PROD_WARNING)
-	bash scripts/create_account.sh $(URL) $(NAME)
+	bash scripts/create_account.sh $(URL) "$(NAME)"
 
 create-account-domain:
 	@$(PROD_WARNING)
