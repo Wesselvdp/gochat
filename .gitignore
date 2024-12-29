@@ -52,3 +52,5 @@ local_db.db
 delete.txt
 file.txt
 /server_db
+
+.idea/

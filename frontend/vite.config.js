@@ -39,9 +39,10 @@ export default defineConfig(({  mode }) => {
         },
         css: {
             preprocessorOptions: {
-                scss: {
+                sass: {
                     sourcemap: true,
                     plugins: [tailwindcss, autoprefixer],
+
                     // If you have any SCSS options
                 }
             }
