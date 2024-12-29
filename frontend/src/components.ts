@@ -1,6 +1,5 @@
+import { removeConversation } from "./conversation";
 
-
-import {removeConversation} from "./conversation";
 class UserMessage extends HTMLElement {
     constructor() {
         super()
@@ -18,7 +17,6 @@ class UserMessage extends HTMLElement {
         `;
     }
 }
-
 
 class RecentConversation extends HTMLElement {
     connectedCallback() {
@@ -56,9 +54,6 @@ class RecentConversation extends HTMLElement {
         (window as any).htmx.process(this);
     }
 }
-
-
-
 
 customElements.define('user-message', UserMessage)
 customElements.define('recent-conversation', RecentConversation)

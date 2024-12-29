@@ -3,7 +3,8 @@ import {LitElement, css, html, unsafeCSS} from 'lit';
 
 import {customElement, property, state} from 'lit/decorators.js';
 import globalStyles from '../styles.scss?inline';
-import {createUserMessage, createInStorage, initConversation} from "../conversation";
+import {  createInStorage, initConversation} from "../conversation";
+import db from "../db";
 
 
 
@@ -26,16 +27,16 @@ export class userInputForm extends LitElement {
         return id
     }
 
-    handleMsg = async (msg: string) => {
+    handleMsg = async (content: string) => {
 
         // If there is no conversation initted
         if(!(window as any).goChat.conversation) {
             const id = this.conversationId || await this.initConversation()
-            await createUserMessage(msg, id)
+            db.messages.create(id, {role: 'user', content})
             return  window.location.href = window.location.origin + `/c/${id}`
         }
         // Existing conversation
-         (window as any).goChat.conversation.handleUserInput(msg)
+         (window as any).goChat.conversation.handleUserInput(content)
 
     }
 

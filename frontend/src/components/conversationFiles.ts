@@ -3,8 +3,9 @@ import {css, html, LitElement, unsafeCSS} from 'lit';
 
 import {customElement, property, state} from 'lit/decorators.js';
 import globalStyles from '../styles.scss?inline';
-import {removeFile, uploadFile} from "../conversation";
+
 import db from "../db";
+import api from "../api";
 
 
 type FileStatus = 'loading' | 'success' | 'error'
@@ -71,17 +72,13 @@ export class SimpleGreeting extends LitElement {
     }
 
     private async _handleFileSubmit(e: any) {
-
         const file = e.target.files[0];
         this.files = [...this.files, {name: file.name, status: 'loading', id: ""}]
-
-
-        let id = this.conversationId || await this.initConversation?.() || ''
+        let id = this.conversationId || this.initConversation?.() || ''
 
         try {
-            const fileId =  await uploadFile(file, id)
-            this._setLastFile({status: 'success', id: fileId, name: file.name})
-
+            const fileRes =  await api.file.create(file, id)
+            this._setLastFile({status: 'success', id: fileRes.data.id, name: file.name})
         } catch (err) {
             this.files = [...this.files.slice(0, -1)]
         }
@@ -90,7 +87,7 @@ export class SimpleGreeting extends LitElement {
 
     private async _onFileClick(fileId: string) {
         try {
-            await removeFile(fileId, this.conversationId)
+            await api.file.delete(fileId, this.conversationId)
             this.files = [...this.files.filter(f => f.id !== fileId)]
         } catch (err) {
             console.log({err})

@@ -5,10 +5,7 @@ import db from "./db";
 import './htmx-openai'
 // Make the function available on the window object
 import { initSentry } from './sentry';
-import './components/conversationFiles'
-import './components/userInputForm'
-import './components/textArea'
-import './components/assistantMessage'
+import './components/components';
 import './svg/icons'
 import htmx from 'htmx.org'
 
@@ -38,8 +35,3 @@ const recentConversations = {
 
 } )()
 
-// document.body.addEventListener('htmx:load', function(event) {
-//     if (typeof initChat === 'function') {
-//         initChat();
-//     }
-// });
