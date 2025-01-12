@@ -1,5 +1,4 @@
 # scripts/create_account.sh
-source .env
 URL=$1
 NAME="$2"
 
