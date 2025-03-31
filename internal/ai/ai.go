@@ -6,20 +6,24 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/sashabaranov/go-openai"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/sashabaranov/go-openai"
 )
 
 func initClient() (*openai.Client, error) {
-	podId := os.Getenv("RUNPOD_POD_ID")
-	if len(podId) == 0 {
-		return nil, errors.New("RUNPOD_POD_ID not set")
-	}
 
+	// podId := os.Getenv("RUNPOD_POD_ID")
+	// if len(podId) == 0 {
+	// 	return nil, errors.New("RUNPOD_POD_ID not set")
+	// }
+
+	// config := openai.ClientConfig{
+	// 	BaseURL: "https://" + podId + "-11434.proxy.runpod.net/v1",
 	config := openai.ClientConfig{
-		BaseURL: "https://" + podId + "-11434.proxy.runpod.net/v1",
+		BaseURL: "http://5.22.250.243:8000/v1/chat/completions",
 		HTTPClient: &http.Client{
 			Timeout: time.Second * 30,
 		},
@@ -44,6 +48,7 @@ func GetCompletion(messages []openai.ChatCompletionMessage) (string, error) {
 
 	if err != nil {
 		fmt.Printf("ChatCompletion error: %v\n", err)
+		fmt.Println("resp", resp)
 		return "", err
 	}
 
