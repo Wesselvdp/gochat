@@ -29,7 +29,7 @@ func afterRequestMiddleware(c *gin.Context) {
 	// Parse the request body
 	body := RequestBody{
 		Model:     "gemma2:27b",
-		KeepAlive: -1,
+		KeepAlive: 86400, // 24 hours in seconds
 	}
 
 	if err := c.BindJSON(&body); err != nil {
