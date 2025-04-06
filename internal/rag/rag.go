@@ -99,10 +99,11 @@ func initMilvusClient(ctx context.Context) (client.Client, error) {
 		return nil, fmt.Errorf("milvus password is empty")
 	}
 
+	//Username:       "root",
+	//Password:       milvusPw,
+	
 	milvusClient, err := client.NewClient(ctx, client.Config{
 		Address:        milvusAddr,
-		Username:       "root",
-		Password:       milvusPw,
 		DBName:         "",
 		Identifier:     "",
 		EnableTLSAuth:  false,

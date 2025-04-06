@@ -116,6 +116,22 @@ test_gpu:
 		"stream": false \
 	}'
 
+update-milvus-config:
+	@echo "Uploading milvus.yml to server..."
+	@if [ ! -f server/milvus.yml ]; then \
+		echo "Error: Local config file not found at server/milvus.yml"; \
+		exit 1; \
+	fi
+		scp server/milvus.yml root@142.93.224.213:/etc/dokploy/compose/gochat-milvus-35a6fb/files/milvus.yml
+
+deploy-milvus:
+	@echo "Triggering redeployment via Dokploy webhook..."
+	@curl -X GET https://dokploy.torgon.io/api/deploy/compose/W-sgdMtup7UpLfbueIJAi
+	@echo "Redeployment request sent!"
+
+milvus-update-and-redeploy: update-milvus-config deploy-milvus
+	@echo "Configuration updated and redeployment triggered successfully!"
+
 #In case we messed something up:
 #download-db-prod:
 #	scp root@142.93.224.213:/etc/dokploy/compose/newproject-gochat-f51808/files/sqlite/database.db ./local_db.db

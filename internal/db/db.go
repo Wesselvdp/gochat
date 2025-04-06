@@ -16,10 +16,29 @@ func Init() (*schema.Queries, *sql.DB, error) {
 		return nil, nil, fmt.Errorf("DB_PATH environment variable not set")
 	}
 
-	database, err := sql.Open("sqlite3", fmt.Sprintf("file:%s?_foreign_keys=on", dbPath))
+	// Check if file exists before connecting
+	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
+		return nil, nil, fmt.Errorf("database file does not exist at path: %s", dbPath)
+	}
 
+	database, err := sql.Open("sqlite3", fmt.Sprintf("file:%s?_foreign_keys=on", dbPath))
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to open database: %w", err)
+	}
+
+	// Verify connection with a ping
+	if err := database.Ping(); err != nil {
+		return nil, nil, fmt.Errorf("failed to ping database: %w", err)
+	}
+
+	// Verify essential tables exist
+	var tableName string
+	err = database.QueryRow("SELECT name FROM sqlite_master WHERE type='table' AND name='user' LIMIT 1").Scan(&tableName)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil, fmt.Errorf("essential table 'user' not found in database")
+		}
+		return nil, nil, fmt.Errorf("failed to verify database schema: %w", err)
 	}
 
 	queries := schema.New(database)
