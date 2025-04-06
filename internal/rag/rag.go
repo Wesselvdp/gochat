@@ -68,7 +68,9 @@ func CreateChunkDocuments(ctx context.Context, text string, fileID string) ([]Do
 
 	texts := SplitText(text)
 	docs := make([]Document, 0, len(texts))
+	//fmt.Println("texts", texts)
 	embeddings, err := ai.GetEmbeddings(ctx, texts)
+
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +90,7 @@ func CreateChunkDocuments(ctx context.Context, text string, fileID string) ([]Do
 	return docs, nil
 }
 
-func initMilvusClient(ctx context.Context) (client.Client, error) {
+func InitMilvusClient(ctx context.Context) (client.Client, error) {
 	milvusAddr := os.Getenv("MILVUS_ADDRESS")
 	if milvusAddr == "" {
 		milvusAddr = "standalone:19530"
@@ -101,7 +103,7 @@ func initMilvusClient(ctx context.Context) (client.Client, error) {
 
 	//Username:       "root",
 	//Password:       milvusPw,
-	
+
 	milvusClient, err := client.NewClient(ctx, client.Config{
 		Address:        milvusAddr,
 		DBName:         "",
@@ -128,7 +130,7 @@ func SaveDocuments(ctx context.Context, docs []Document, fileID string, conversa
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	milvusClient, err := initMilvusClient(ctx)
+	milvusClient, err := InitMilvusClient(ctx)
 	if err != nil {
 		return err
 	}
@@ -158,6 +160,7 @@ func SaveDocuments(ctx context.Context, docs []Document, fileID string, conversa
 	fileIdCol := entity.NewColumnVarChar("fileId", ids)
 	embeddingCol := entity.NewColumnFloatVector("embedding", dim, embeddings)
 
+	fmt.Println(textCol, embeddingCol, embeddingCol)
 	// Insert data
 	_, err = milvusClient.Insert(
 		ctx,
@@ -185,7 +188,7 @@ func SaveDocuments(ctx context.Context, docs []Document, fileID string, conversa
 func RemoveDocumentsByFileId(ctx context.Context, fileID string, conversationID string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	milvusClient, err := initMilvusClient(ctx)
+	milvusClient, err := InitMilvusClient(ctx)
 	if err != nil {
 		return err
 	}
@@ -204,7 +207,7 @@ func RemoveDocumentsByFileId(ctx context.Context, fileID string, conversationID 
 func RemovePartition(ctx context.Context, conversationID string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	milvusClient, err := initMilvusClient(ctx)
+	milvusClient, err := InitMilvusClient(ctx)
 	if err != nil {
 		return err
 	}
@@ -224,7 +227,7 @@ func SearchSimilarChunks(
 	conversationID string,
 	topK int64,
 ) ([]SearchResult, error) {
-	milvusClient, err := initMilvusClient(ctx)
+	milvusClient, err := InitMilvusClient(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -294,6 +297,7 @@ func HandleFileEmbedding(ctx context.Context, file *multipart.FileHeader, fileID
 	}
 
 	docs, err := CreateChunkDocuments(ctx, extractedText, fileID)
+	fmt.Println("CreateChunkDocuments:", len(docs))
 	err = SaveDocuments(ctx, docs, fileID, conversationID)
 
 	if err != nil {
@@ -380,7 +384,7 @@ func GetRaggedAnswer(ctx context.Context, messages []openai.ChatCompletionMessag
 		prompt := RagPrompt2(documentContext, query)
 		response, err = ai.SingleQuery(prompt)
 	} else {
-		response, err = ai.GetCompletion(messages)
+		response, err = ai.GetCompletionStream(ctx, conversationID, messages)
 	}
 
 	return response, nil

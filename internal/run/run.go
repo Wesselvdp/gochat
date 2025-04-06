@@ -8,6 +8,7 @@ import (
 	sentrygin "github.com/getsentry/sentry-go/gin"
 	"github.com/gin-gonic/gin"
 	"gochat/api"
+	"gochat/internal/rag"
 	"io"
 	"log"
 	"net/http"
@@ -52,12 +53,16 @@ func Run(ctx context.Context, w io.Writer, args []string) error {
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt)
 	defer cancel()
 
+	// Make sure we have a documents collection
+	milvusClient, err := rag.InitMilvusClient(ctx)
+	err = rag.CreateDocumentsCollection(ctx, milvusClient)
+
 	//Flags
 	fs := flag.NewFlagSet("myflagset", flag.ExitOnError)
 	var (
 		port = fs.String("port", "8080", "Port to listen on")
 	)
-	err := fs.Parse(args[1:])
+	err = fs.Parse(args[1:])
 	if err != nil {
 		log.Fatal(err)
 	}

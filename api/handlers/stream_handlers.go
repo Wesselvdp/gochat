@@ -79,8 +79,6 @@ func MessageHandler(manager *services.ClientManager) gin.HandlerFunc {
 			Messages       []openai.ChatCompletionMessage `json:"messages"`
 		}
 
-		fmt.Println("data", data)
-
 		if err := c.ShouldBindJSON(&data); err != nil {
 			c.JSON(400, gin.H{"error": "Invalid request body"})
 			return
