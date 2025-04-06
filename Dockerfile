@@ -42,6 +42,7 @@ RUN apk add ca-certificates sqlite
 
 # Copy binary from builder
 COPY --from=builder /app/server /server
+RUN chmod +x /server  # Add this line to make the server executable
 # Copy the frontend dist files (only once)
 COPY --from=frontend-builder /app/dist /frontend/dist
 # Copy migrations
