@@ -72,7 +72,7 @@ export class SimpleGreeting extends LitElement {
     }
 
     getConversationId() {
-        if (this.id) return this.id;
+        if (this.conversationId) return this.conversationId;
         return this.initConversation?.()
     }
 
@@ -82,8 +82,15 @@ export class SimpleGreeting extends LitElement {
 
         const id = await this.getConversationId()
 
+        const conv = await db.conversation.get(id);
+        if (!conv) return null;
+
         try {
             const fileRes = await api.file.create(file, id)
+            await db.conversation.update({
+                ...conv,
+                files: [{id: fileRes.data.id, name: file.name}]
+            });
             this._setLastFile({status: 'success', id: fileRes.data.id, name: file.name})
         } catch (err) {
             this.files = [...this.files.slice(0, -1)]
@@ -105,7 +112,6 @@ export class SimpleGreeting extends LitElement {
     render() {
         return html`
             <div class="bg-background-4 rounded-b-lg px-4 mx-3 mt-[-3px] flex ">
-                <p>id: ${this.conversationId}</p>
                 <div class="flex-1 flex gap-4 py-2">
                     ${this.files.map((file, i) =>
                             html`

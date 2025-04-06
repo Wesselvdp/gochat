@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/sashabaranov/go-openai"
 	"gochat/internal/ai"
+	"gochat/internal/rag"
 	"gochat/internal/services"
 	"net/http"
 
@@ -77,6 +78,7 @@ func MessageHandler(manager *services.ClientManager) gin.HandlerFunc {
 		var data struct {
 			ConversationID string                         `json:"conversationId"`
 			Messages       []openai.ChatCompletionMessage `json:"messages"`
+			HasFiles       bool                           `json:"hasFiles"`
 		}
 
 		if err := c.ShouldBindJSON(&data); err != nil {
@@ -88,7 +90,13 @@ func MessageHandler(manager *services.ClientManager) gin.HandlerFunc {
 			return
 		}
 
-		go ai.GetCompletionStream(c, data.ConversationID, data.Messages, manager)
+		fmt.Println("hasFiles: ", data.HasFiles)
+
+		if data.HasFiles {
+			go rag.GetRaggedAnswerStream(c, data.Messages, data.ConversationID, manager)
+		} else {
+			go ai.GetCompletionStream(c, data.ConversationID, data.Messages, manager)
+		}
 
 		// Start async goroutine to stream LLM response
 		//go services.StreamLLMResponse(data.ConversationID, manager)

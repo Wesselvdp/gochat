@@ -182,6 +182,8 @@ class Conversation {
         const conv = await db.conversation.get(this.id);
         const hasFiles = !!conv?.files.map((f) => f.id).length;
 
+        console.log({hasFiles, c: conv})
+
         await this.stream.sendMessage(contextMessages, this.id, hasFiles);
     }
 }
@@ -285,12 +287,11 @@ async function getCompletion(
         const res = await axios.post(`/send-message`, {
             messages,
             conversationId,
-            hasFiles,
         });
         return res.data.content;
     } catch (err) {
         console.log(err);
-        return "Oeps, er is iets mis. We sturen er een ontwikkelaar op af";
+        return "Nieuw gesprek";
     }
 }
 

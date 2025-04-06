@@ -66,13 +66,13 @@ func CreateDocumentsCollection(ctx context.Context, client client.Client) error 
 		return err
 	}
 
-	err = client.CreateIndex(ctx, "faq", "embedding", idx, false)
+	err = client.CreateIndex(ctx, "documents", "embedding", idx, false)
 	if err != nil {
 		return err
 	}
 
 	// Load collection to memory
-	err = client.LoadCollection(ctx, "faq", false)
+	err = client.LoadCollection(ctx, "documents", false)
 	if err != nil {
 		return err
 	}

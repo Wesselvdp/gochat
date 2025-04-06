@@ -232,11 +232,11 @@ func SendMessageHandler() gin.HandlerFunc {
 		}
 
 		// Process message based on file existence
-		if data.HasFiles {
-			aiResponse, err = rag.GetRaggedAnswer(ctx, data.Messages, data.ConversationID)
-		} else {
-			aiResponse, err = ai.GetCompletion(data.Messages)
-		}
+		//if data.HasFiles {
+		//	aiResponse, err = rag.GetRaggedAnswer(ctx, data.Messages, data.ConversationID)
+		//} else {
+		aiResponse, err = ai.GetCompletion(data.Messages)
+		//}
 		// Handle potential processing error
 		if err != nil {
 			errorMessage = err.Error()

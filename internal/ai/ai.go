@@ -90,7 +90,6 @@ func GetCompletion(messages []openai.ChatCompletionMessage) (string, error) {
 		openai.ChatCompletionRequest{
 			Model:    "gemma3:27b",
 			Messages: messages,
-			Stream:   true,
 		},
 	)
 
@@ -109,7 +108,19 @@ func GetCompletion(messages []openai.ChatCompletionMessage) (string, error) {
 	content := resp.Choices[0].Message.Content
 	return content, nil
 }
-
+func SingleQueryStream(ctx context.Context, convsersationId string, query string, manager *services.ClientManager) error {
+	err := GetCompletionStream(ctx, convsersationId, []openai.ChatCompletionMessage{
+		{
+			Role:    "user",
+			Content: query,
+		},
+	}, manager)
+	if err != nil {
+		fmt.Printf("Failed to get completion stream for singleQuery: %v\n", err)
+		return err
+	}
+	return nil
+}
 func SingleQuery(query string) (string, error) {
 	completion, err := GetCompletion([]openai.ChatCompletionMessage{
 		{

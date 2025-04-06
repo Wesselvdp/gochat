@@ -7,6 +7,7 @@ import (
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
 	"github.com/sashabaranov/go-openai"
 	"gochat/internal/ai"
+	"gochat/internal/services"
 	"io"
 	"mime/multipart"
 	"os"
@@ -258,7 +259,7 @@ func SearchSimilarChunks(
 		cols,
 		vectors,
 		"embedding",
-		entity.L2,
+		entity.COSINE,
 		5,
 		sp,
 	)
@@ -343,6 +344,7 @@ func formatSearchResultsToMarkdown(results []SearchResult) string {
 
 func GetDocumentsFromQuery(ctx context.Context, query string, conversationID string) (string, error) {
 	queryEmbedding, err := ai.GetEmbeddings(ctx, []string{query})
+
 	if err != nil {
 		fmt.Println("err", err.Error())
 		return "", err
@@ -350,14 +352,14 @@ func GetDocumentsFromQuery(ctx context.Context, query string, conversationID str
 
 	searchResult, err := SearchSimilarChunks(ctx, queryEmbedding[0].Embedding, conversationID, 5)
 	markdown := formatSearchResultsToMarkdown(searchResult)
-
+	fmt.Println(markdown)
 	return markdown, err
 }
 
 func determineRAGWithContext(userQuery string, documentContext string) (bool, error) {
 	prompt := RAGDeterminationPrompt(userQuery, documentContext)
 	response, err := ai.SingleQuery(prompt)
-
+	fmt.Println("documentContext:", documentContext)
 	if err != nil {
 		return false, err
 	}
@@ -365,27 +367,28 @@ func determineRAGWithContext(userQuery string, documentContext string) (bool, er
 }
 
 // GetRaggedAnswer Returns a ragged answer if the LLM deems RAG is required, returns a normal answer if not.
-func GetRaggedAnswer(ctx context.Context, messages []openai.ChatCompletionMessage, conversationID string) (string, error) {
+func GetRaggedAnswerStream(ctx context.Context, messages []openai.ChatCompletionMessage, conversationID string, manager *services.ClientManager) error {
 	query := messages[len(messages)-1].Content
 	documentContext, err := GetDocumentsFromQuery(ctx, query, conversationID)
-
 	if err != nil {
-		return "", err
+		fmt.Println("err", err.Error())
 	}
-
 	// LLM will decide whether RAG is required, given the question and the document context
 	useRAG, err := determineRAGWithContext(query, documentContext)
-	if err != nil {
-		return "", err
-	}
 
-	var response string
 	if useRAG {
 		prompt := RagPrompt2(documentContext, query)
-		response, err = ai.SingleQuery(prompt)
+		err = ai.SingleQueryStream(ctx, conversationID, prompt, manager)
+		if err != nil {
+			fmt.Println("err", err.Error())
+			return err
+		}
 	} else {
-		response, err = ai.GetCompletionStream(ctx, conversationID, messages)
+		err = ai.GetCompletionStream(ctx, conversationID, messages, manager)
+		if err != nil {
+			fmt.Println("err", err.Error())
+			return err
+		}
 	}
-
-	return response, nil
+	return nil
 }
