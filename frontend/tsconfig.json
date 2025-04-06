@@ -3,7 +3,6 @@
     "module": "ESNext",
     "moduleResolution": "node",
     "lib": ["ES6", "DOM"],
-    "allowGlobalCompile": true,
     "experimentalDecorators": true,
     "target": "ES6",
     /* Allow 'import x from y' when a module doesn't have a default export. */

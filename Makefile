@@ -1,9 +1,9 @@
 
-# Load .env file if it exists
-ifneq (,$(wildcard .env))
-    include scripts/.env
-    export
-endif
+## Load .env file if it exists
+#ifneq (,$(wildcard .env))
+#    include scripts/.env
+#    export
+#endif
 
 #ENV ?= development  # Default to development
 PRODUCTION_URL = https://app.torgon.io
@@ -104,7 +104,17 @@ migrate-force:
 	#echo "docker exec -it $(DOCKER_CONTAINER) migrate -path migrations -database sqlite3:///data/database.db?_foreign_keys=on goto $(number)"
 	ssh -t root@142.93.224.213 "docker exec -it $(DOCKER_CONTAINER) migrate -v -path db/migrations -database sqlite3:///data/database.db?_foreign_keys=on force $(number)"
 
-
+test_gpu:
+	curl -X POST http://5.22.250.243:11434/api/chat -d '{ \
+		"model": "gemma3:27b", \
+		"messages": [ \
+			{ \
+				"role": "user", \
+				"content": "Write a short poem about artificial intelligence." \
+			} \
+		], \
+		"stream": false \
+	}'
 
 #In case we messed something up:
 #download-db-prod:

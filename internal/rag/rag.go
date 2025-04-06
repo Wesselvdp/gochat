@@ -59,25 +59,30 @@ func SplitText(text string) []string {
 	return result
 }
 
-func CreateChunkDocuments(text string, fileID string) ([]Document, error) {
+type EmbeddingWithOriginal struct {
+	openai.Embedding // Embedding is embedded, so all its fields are accessible directly
+	Text             string
+}
 
-	var docs []Document
+func CreateChunkDocuments(ctx context.Context, text string, fileID string) ([]Document, error) {
+
 	texts := SplitText(text)
-	for i, text := range texts {
-		textEmbedding, err := ai.GetEmbedding(text)
-		if err != nil {
-			fmt.Println("GetEmbedding err:", err.Error())
-			return nil, err
-		}
+	docs := make([]Document, 0, len(texts))
+	embeddings, err := ai.GetEmbeddings(ctx, texts)
+	if err != nil {
+		return nil, err
+	}
+
+	for i, embedding := range embeddings {
+		originalText := texts[embedding.Index]
+
 		doc := Document{
-			Text:      text,
-			Embedding: textEmbedding,
+			Text:      originalText,
+			Embedding: embedding.Embedding,
 			ID:        int64(i + 1),
 			fileID:    fileID,
 		}
-
 		docs = append(docs, doc)
-
 	}
 
 	return docs, nil
@@ -287,7 +292,7 @@ func HandleFileEmbedding(ctx context.Context, file *multipart.FileHeader, fileID
 		fmt.Println("extractor failed:", err.Error())
 	}
 
-	docs, err := CreateChunkDocuments(extractedText, fileID)
+	docs, err := CreateChunkDocuments(ctx, extractedText, fileID)
 	err = SaveDocuments(ctx, docs, fileID, conversationID)
 
 	if err != nil {
@@ -332,13 +337,13 @@ func formatSearchResultsToMarkdown(results []SearchResult) string {
 }
 
 func GetDocumentsFromQuery(ctx context.Context, query string, conversationID string) (string, error) {
-	queryEmbedding, err := ai.GetEmbedding(query)
+	queryEmbedding, err := ai.GetEmbeddings(ctx, []string{query})
 	if err != nil {
 		fmt.Println("err", err.Error())
 		return "", err
 	}
 
-	searchResult, err := SearchSimilarChunks(ctx, queryEmbedding, conversationID, 5)
+	searchResult, err := SearchSimilarChunks(ctx, queryEmbedding[0].Embedding, conversationID, 5)
 	markdown := formatSearchResultsToMarkdown(searchResult)
 
 	return markdown, err

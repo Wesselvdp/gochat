@@ -29,7 +29,7 @@ func afterRequestMiddleware(c *gin.Context) {
 	// Parse the request body
 	body := RequestBody{
 		Model:     "gemma2:27b",
-		KeepAlive: -1,
+		KeepAlive: 86400, // 24 hours in seconds
 	}
 
 	if err := c.BindJSON(&body); err != nil {
@@ -71,11 +71,16 @@ func AddRoutes(r *gin.Engine) {
 
 	protected := r.Group("")
 	protected.Use(auth.JWTMiddleware())
+	m := services.NewClientManager()
 	{
 		protected.GET("", handlers.IndexPageHandler())
 		protected.GET("c/:id", handlers.ChatPageHandler())
 		protected.GET("component/:componentName", handlers.ComponentHandler())
 		protected.POST("send-message", afterRequestMiddleware, handlers.SendMessageHandler())
+		// Split these into separate handlers
+		protected.GET("/chat-stream", handlers.ChatStreamHandler(m))
+		protected.POST("/chat-stream", handlers.MessageHandler(m))
+
 		protected.POST("file/upload", handlers.FileUploadHandler())
 		protected.POST("file/delete", handlers.FileDeleteHandler())
 		protected.POST("conversation/delete", handlers.PartitionDeleteHandler())

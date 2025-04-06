@@ -108,6 +108,37 @@ export async function createMessage(conversationId: string, message: ChatComplet
   return value
 }
 
+
+
+// Update an existing message in the conversation
+export async function updateMessage(messageId: string, updates: { content: string }) {
+  const db = await init();
+
+  // Get the existing message first
+  const existingMessage = await db.get('messages', messageId) as Message;
+
+  if (!existingMessage) {
+    throw new Error(`Message with ID ${messageId} not found`);
+  }
+
+  // Type guard to ensure we're dealing with a message with a string content
+  if (typeof existingMessage.content !== 'string') {
+    throw new Error('Cannot update a message with non-string content');
+  }
+
+  // Create a new message with updated content
+  // We need to explicitly specify content as a string to satisfy the Message type
+  const updatedMessage: Message = {
+    ...existingMessage,
+    content: updates.content,
+  };
+
+  // Update the message in the database
+  await db.put('messages', updatedMessage);
+
+  return updatedMessage;
+}
+
 export async function getMessagesForConversation(conversationId: string) {
   const db = await init();
 
@@ -130,7 +161,8 @@ export async function getMessagesForConversation(conversationId: string) {
 export default {
   messages: {
     create: createMessage,
-    getByConversation: getMessagesForConversation
+    getByConversation: getMessagesForConversation,
+    update: updateMessage
   },
   conversation: {
     get: getConversation,

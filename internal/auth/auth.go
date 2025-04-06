@@ -15,9 +15,7 @@ import (
 
 // Todo make a config object with checks and fallbacks
 var (
-	clientSecret = os.Getenv("AZURE_CLIENT_SECRET")
-	clientID     = os.Getenv("AZURE_CLIENT_ID")
-	scope        = "User.Read offline_access openid email profile"
+	scope = "User.Read offline_access openid email profile"
 )
 
 var protocol = func() string {
@@ -167,6 +165,9 @@ type OAuthAccessResponse struct {
 }
 
 func GetToken(code string) (string, error) {
+	clientID := os.Getenv("AZURE_CLIENT_ID")
+	clientSecret := os.Getenv("AZURE_CLIENT_SECRET")
+
 	tokenURL := fmt.Sprintf("https://login.microsoftonline.com/common/oauth2/v2.0/token")
 	data := url.Values{}
 	data.Set("grant_type", "authorization_code")
@@ -208,6 +209,8 @@ func GetToken(code string) (string, error) {
 }
 
 func LoginHandler() gin.HandlerFunc {
+	clientID := os.Getenv("AZURE_CLIENT_ID")
+
 	return func(c *gin.Context) {
 		authURL := fmt.Sprintf("https://login.microsoftonline.com/common/oauth2/v2.0/authorize?"+
 			"client_id=%s&response_type=code&redirect_uri=%s&response_mode=query&scope=%s",

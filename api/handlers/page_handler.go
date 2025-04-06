@@ -17,6 +17,7 @@ import (
 	"gochat/views/components"
 	"io"
 	"net/http"
+
 	"time"
 )
 
@@ -302,6 +303,7 @@ func FileUploadHandler() gin.HandlerFunc {
 		// Create embeddings and save to vector DB
 		err = rag.HandleFileEmbedding(c, file, fileID, conversationID)
 		if err != nil {
+			fmt.Println("err", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
