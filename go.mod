@@ -13,7 +13,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/mattn/go-sqlite3 v1.14.24
 	github.com/milvus-io/milvus-sdk-go/v2 v2.4.2
-	github.com/sashabaranov/go-openai v1.32.2
+	github.com/sashabaranov/go-openai v1.38.1
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/oauth2 v0.23.0
 )
