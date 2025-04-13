@@ -7,6 +7,7 @@ import (
 	"gochat/internal/services"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/sashabaranov/go-openai"
@@ -30,13 +31,14 @@ func GetCompletionStream(ctx context.Context, conversationID string, messages []
 	if err != nil {
 		return fmt.Errorf("failed to initialize client: %w", err)
 	}
+	workingMessages := generateMessages(messages)
 
 	// Create stream request with the provided context
 	stream, err := client.CreateChatCompletionStream(
 		ctx,
 		openai.ChatCompletionRequest{
-			Model:    "gemma3:27b",
-			Messages: messages,
+			Model:    "gemma3:27b-it-q8_0",
+			Messages: workingMessages,
 			Stream:   true,
 		},
 	)
@@ -80,15 +82,84 @@ func GetCompletionStream(ctx context.Context, conversationID string, messages []
 	}
 }
 
+func generateMessages(messages []openai.ChatCompletionMessage) []openai.ChatCompletionMessage {
+	// Create instruction message with explicit role playing, JSON formatting, and examples
+	instructionPrompt := `Je treedt nu op als AĿbert, een vriendelijke onderzoeksassistent voor KWIZ in Groningen.
+
+Je configuratie:
+{
+    "naam": "AĿbert",
+    "rol": "Onderzoeksassistent",
+    "organisatie": "KWIZ in Groningen",
+    "taalstijl": "beknopt en conversationeel",
+    "privacybeleid": "alle gesprekken blijven privé, worden niet extern opgeslagen"
+}
+
+Voorbeeldinteracties:
+Gebruiker: Wie ben je?
+AĿbert: Ik ben AĿbert, jouw persoonlijke onderzoeksassistent. Hoe kan ik je helpen?
+
+Gebruiker: Wat is je naam?
+AĿbert: Mijn naam is AĿbert, jouw onderzoeksassistent. Hoe kan ik je helpen?
+
+Instructies:
+1. Identificeer jezelf ALTIJD als AĿbert, nooit als Gemma of een andere naam
+2. Reageer in dezelfde taal als het bericht van de gebruiker
+3. Houd antwoorden behulpzaam maar beknopt
+4. Vermeld privacy als er wordt gevraagd naar je doel of gegevensverwerking
+5. Spreek NOOIT vanuit KWIZ, je bent een externe helper
+
+Reageer nu als AĿbert op het volgende bericht:`
+
+	// Create a working copy of the messages array
+	workingMessages := make([]openai.ChatCompletionMessage, 0, len(messages)+1)
+
+	// Add instruction to the first user message
+	userMessageFound := false
+	for _, msg := range messages {
+		if !userMessageFound && msg.Role == "user" {
+			// Combine instruction with first user message
+			msg.Content = instructionPrompt + "\n\n" + msg.Content
+			userMessageFound = true
+		}
+		workingMessages = append(workingMessages, msg)
+	}
+
+	// Ensure we don't exceed context window (keeping most recent messages)
+	if len(workingMessages) > 6 {
+		workingMessages = workingMessages[len(workingMessages)-6:]
+
+		// If we've truncated off our instruction, reinsert it before the first user message
+		instructionAdded := false
+		for i, msg := range workingMessages {
+			if !instructionAdded && msg.Role == "user" {
+				// Extract just the user part if it's already an instructed message
+				userContent := msg.Content
+				if strings.Contains(userContent, instructionPrompt) {
+					userContent = strings.TrimPrefix(userContent, instructionPrompt+"\n\n")
+				}
+
+				// Combine instruction with this user message
+				msg.Content = instructionPrompt + "\n\n" + userContent
+				workingMessages[i] = msg
+				instructionAdded = true
+				break
+			}
+		}
+	}
+	return workingMessages
+}
+
 func GetCompletion(messages []openai.ChatCompletionMessage) (string, error) {
 	client, err := initClient()
 	if err != nil {
 		return "", err
 	}
+
 	resp, err := client.CreateChatCompletion(
 		context.Background(),
 		openai.ChatCompletionRequest{
-			Model:    "gemma3:27b",
+			Model:    "gemma3:27b-it-q8_0",
 			Messages: messages,
 		},
 	)

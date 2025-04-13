@@ -1,22 +1,5 @@
-import { removeConversation } from "./conversation";
+import {removeConversation} from "../conversation";
 
-class UserMessage extends HTMLElement {
-    constructor() {
-        super()
-        const content = this.textContent;
-        this.innerHTML = `
-        <div class="w-full">
-            <div class="flex flex-col justify-between px-5 mb-3 max-w-5xl mx-auto rounded-lg group">
-                <div class="flex justify-end pb-1">
-                    <div class="rounded-lg bg-background-bubble px-2 py-2">
-                        <p style="white-space: pre-wrap;">${content}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        `;
-    }
-}
 
 class RecentConversation extends HTMLElement {
     connectedCallback() {
@@ -43,7 +26,7 @@ class RecentConversation extends HTMLElement {
             removeConversation(id);
 
             if (window.location.href.endsWith(`c/${id}`)) {
-                htmx.ajax('GET', '/component/newchat', {target:'#inner'})
+                htmx.ajax('GET', '/component/newchat', {target: '#inner'})
             }
             (window as any).goChat.recentConversations.init()
 
@@ -55,6 +38,4 @@ class RecentConversation extends HTMLElement {
     }
 }
 
-customElements.define('user-message', UserMessage)
 customElements.define('recent-conversation', RecentConversation)
-

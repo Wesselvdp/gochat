@@ -9,7 +9,7 @@ import (
 // CreateFAQCollection creates the FAQ collection in Milvus if it doesn't exist
 func CreateDocumentsCollection(ctx context.Context, client client.Client) error {
 	// Check if collection exists first
-	has, err := client.HasCollection(ctx, "faq")
+	has, err := client.HasCollection(ctx, "documents")
 	if err != nil {
 		return err
 	}
