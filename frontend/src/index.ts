@@ -19,8 +19,8 @@ const recentConversations = {
         if (!rootEl) return;
         rootEl.innerHTML = "";
         const conversations = await db.conversation.list()
-        const all = [...conversations, ...conversations, ...conversations, ...conversations, ...conversations, ...conversations]
-        all.map((c, i) => {
+
+        conversations.map((c, i) => {
             // if (i > 6) return;
 
             const div = document.createElement("div");

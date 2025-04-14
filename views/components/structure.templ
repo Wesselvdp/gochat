@@ -26,6 +26,7 @@ templ Header(user *schema.GetUserRow) {
 	<head>
 <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>		<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"/>
 		<link rel="stylesheet" href="/static/style.css"/>
+		<link rel="stylesheet" href="/static/frontend.css"/>
 		<link rel="stylesheet" href={ "/static/themes/default.css" }/>
 		<!-- Account-Specific Stylesheet -->
 		@templ.Raw(getAccountTheme(user))
@@ -102,6 +103,7 @@ css primaryClassName(id string) {
 templ Avatar(user *schema.GetUserRow) {
 	<div class={ primaryClassName(user.AccountID.String) }></div>
 }
+
 
 templ SideBar(user *schema.GetUserRow) {
 	// Sidebar
