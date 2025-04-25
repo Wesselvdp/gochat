@@ -7,18 +7,19 @@ import (
 	"gochat/internal/run"
 	"log"
 	"os"
+	"path/filepath"
 )
 
 func init() {
-	//execPath, err := os.Executable()
-	//if err != nil {
-	//	log.Printf("Error getting executable path: %v", err)
-	//}
+	execPath, err := os.Executable()
+	if err != nil {
+		log.Printf("Error getting executable path: %v", err)
+	}
 
-	//projectRoot := filepath.Join(filepath.Dir(execPath), "..")
-	//envPath := filepath.Join(projectRoot, ".env")
+	projectRoot := filepath.Join(filepath.Dir(execPath), "..")
+	envPath := filepath.Join(projectRoot, ".env")
 	// loads values from .env into the system
-	if err := godotenv.Load(); err != nil {
+	if err := godotenv.Load(envPath); err != nil {
 		log.Print("No .env file found")
 	}
 }
