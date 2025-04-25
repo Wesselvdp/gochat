@@ -7,6 +7,7 @@ package schema
 import (
 	"context"
 	"database/sql"
+	"fmt"
 )
 
 type DBTX interface {
@@ -25,6 +26,7 @@ type Queries struct {
 }
 
 func (q *Queries) WithTx(tx *sql.Tx) *Queries {
+	fmt.Println("nisscesr")
 	return &Queries{
 		db: tx,
 	}

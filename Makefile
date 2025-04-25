@@ -40,6 +40,16 @@ download-db:
 	@echo "Downloading with env: $(ENV)"
 	scp root@142.93.224.213:$(DB_PATH) server_db/local_$(ENV).$$(date +%Y%m%d_%H%M).db
 
+air-build:
+	@echo "fileapth: $(FILEPATH)"
+	@if echo "$(FILEPATH)" | grep -q "\.templ$$"; then \
+		echo "Running templ generate only"; \
+		templ generate; \
+	else \
+		echo "Running go build only"; \
+		go build -o ./tmp/main cmd/main.go; \
+	fi
+
 # Never tested, use with caution
 upload-db:
 	@$(PROD_WARNING)

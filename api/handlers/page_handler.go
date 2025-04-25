@@ -256,25 +256,23 @@ func SendMessageHandler() gin.HandlerFunc {
 	}
 }
 
-func ChatPageHandler() gin.HandlerFunc {
+func ThreadPageHandler() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		_, cancel := context.WithTimeout(context.Background(), appTimeout)
 		defer cancel()
 
-		conversationID := ctx.Param("id")
+		threadID := ctx.Param("id")
 		user, err := getUserData(ctx)
 		if err != nil {
 			fmt.Println("err", err)
 		}
 		isHTMX := ctx.GetHeader("HX-Request") != ""
-		if isHTMX {
-			// Serve partial HTML for HTMX requests
-			render(ctx, http.StatusOK, views.Chat(conversationID, user))
-		} else {
-			render(ctx, http.StatusOK, views.ChatPage(conversationID, user))
-		}
+
+		render(ctx, http.StatusOK, views.ThreadPage(threadID, user, isHTMX))
 	}
 }
+
+
 
 func FileUploadHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {

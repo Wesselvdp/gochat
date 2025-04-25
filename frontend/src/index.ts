@@ -1,39 +1,18 @@
 import "./styles.scss";
-import {initConversation} from "./conversation";
-import './components'
-import db from "./db";
-import './htmx-openai'
+// import { initConversation } from "./conversation";
+import "./components";
+import db, { SavedConversation } from "./db";
+import "./htmx-openai";
 // Make the function available on the window object
-import {initSentry} from './sentry';
-import './components';
-import './svg/icons'
-import htmx from 'htmx.org'
+import { initSentry } from "./sentry";
+import "./components";
+import "./svg/icons";
 
+import htmx from "htmx.org";
 
 // Initialize Sentry before your app
 initSentry();
 
-const recentConversations = {
-    init: async function () {
-        const rootEl = document.querySelector('#recentConversationsRoot');
-        if (!rootEl) return;
-        rootEl.innerHTML = "";
-        const conversations = await db.conversation.list()
-        const all = [...conversations, ...conversations, ...conversations, ...conversations, ...conversations, ...conversations]
-        all.map((c, i) => {
-            // if (i > 6) return;
-
-            const div = document.createElement("div");
-            div.innerHTML = `<recent-conversation id="${c.id}" title="${c.title}"></recent-conversation>`;
-            rootEl?.appendChild(div)
-
-        })
-    },
-};
-(window as any).goChat = {initConversation, recentConversations};
-
 (async () => {
-    recentConversations.init()
-
-})()
-
+  // recentConversations.init()
+})();

@@ -1,0 +1,41 @@
+package views
+
+import (
+	"gochat/internal/schema"
+	"gochat/views/components"
+)
+
+templ ThreadPage(threadId string, user *schema.GetUserRow, isHTMX bool) {
+	if isHTMX {
+        @Thread(threadId)
+	} else {
+		<!DOCTYPE html>
+		<html lang="en">
+			@components.Header(user)
+			@components.Body() {
+				<div class="flex">
+					@components.SideBar(user)
+					<div id="inner" class="bg-background-secondary mt-4 border-l-[0.1px] border-t-[0.1px] border-slate-100/30 rounded-tl-lg h-screen max-h-[calc(100dvh-16px)] md:max-w-[calc(100%-260px)] w-full max-w-full flex flex-col pt-2">
+                        @Thread(threadId)
+					</div>
+				</div>
+			}
+		</html>
+	}
+}
+
+templ Thread(threadId string) {
+	<div id="scrollContainer" class="pb-2 px-2 flex flex-col justify-between w-full flex-auto overflow-auto h-0 max-w-full z-10 scrollbar-hidden ">
+		<div id="messageRoot" class="flex pt-4 flex-col flex-auto z-10 max-w-3xl mx-auto w-full">
+			<user-thread id={ threadId }></user-thread>
+		</div>
+	</div>
+	// input
+	<div class="px-2 mb-3 w-full flex justify-center">
+		<form
+			class="max-w-3xl mx-auto w-full"
+		>
+			<user-input-form threadId={ threadId }></user-input-form>
+		</form>
+	</div>
+}

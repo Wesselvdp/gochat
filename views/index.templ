@@ -14,7 +14,7 @@ templ Index(user *schema.GetUserRow) {
 				// Sidebar
 				@components.SideBar(user)
 				// Inner
-				<div id="inner" class="h-screen max-h-[100dvh] md:max-w-[calc(100%-260px)] w-full max-w-full flex flex-col pt-2">
+				<div id="inner" class="bg-background-tertiary mt-4 border-l-[0.1px] border-t-[0.1px] border-slate-100/30 rounded-tl-lg h-screen max-h-[100dvh] md:max-w-[calc(100%-260px)] w-full max-w-full flex flex-col pt-2">
 					@components.NewChat(user.Name.String)
 				</div>
 			</div>
@@ -53,59 +53,5 @@ templ LoginPage() {
 	</html>
 }
 
-templ ChatPage(conversationId string, user *schema.GetUserRow) {
-	<!DOCTYPE html>
-	<html lang="en">
-		@components.Header(user)
-		@components.Body() {
-			<div class="flex">
-				@components.SideBar(user)
-				// Inner
-				<div id="inner" class="h-screen max-h-[100dvh] md:max-w-[calc(100%-260px)] w-full max-w-full flex flex-col pt-2">
-					@Chat(conversationId, user)
-				</div>
-			</div>
-		}
-	</html>
-}
 
-templ Chat(id string, user *schema.GetUserRow) {
-	@templ.JSONScript("conversationId", id)
-	<script>
 
-	function waitForGoChat(callback) {
-		if (window.goChat) {
-			callback();
-		} else {
-			setTimeout(() => waitForGoChat(callback), 100);
-		}
-	}
-
-	function initializeChat() {
-		const id = JSON.parse(document.getElementById('conversationId').textContent);
-
-		if(!id) return;
-		window.goChat.initConversation(id);
-	}
-
-		if (document.readyState === 'loading') {
-		document.addEventListener('DOMContentLoaded', () => waitForGoChat(initializeChat));
-	} else {
-		waitForGoChat(initializeChat);
-	}
-
-	</script>
-	// bubbles
-	<div id="scrollContainer" class="pb-2 px-2 flex flex-col justify-between w-full flex-auto overflow-auto h-0 max-w-full z-10 scrollbar-hidden ">
-		<div id="messageRoot" class="flex pt-4 flex-col flex-auto z-10 max-w-3xl mx-auto w-full"></div>
-	</div>
-	// input
-	<div class="px-2 mb-3 w-full flex justify-center">
-		<form
-			class="max-w-3xl mx-auto w-full"
-		>
-			// <text-area class="w-full"></text-area>
-			<user-input-form conversationId={ id }></user-input-form>
-		</form>
-	</div>
-}

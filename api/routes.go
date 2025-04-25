@@ -74,7 +74,7 @@ func AddRoutes(r *gin.Engine) {
 	m := services.NewClientManager()
 	{
 		protected.GET("", handlers.IndexPageHandler())
-		protected.GET("c/:id", handlers.ChatPageHandler())
+		protected.GET("thread/:id", handlers.ThreadPageHandler())
 		protected.GET("component/:componentName", handlers.ComponentHandler())
 		protected.POST("send-message", afterRequestMiddleware, handlers.SendMessageHandler())
 		// Split these into separate handlers
@@ -84,6 +84,7 @@ func AddRoutes(r *gin.Engine) {
 		protected.POST("file/upload", handlers.FileUploadHandler())
 		protected.POST("file/delete", handlers.FileDeleteHandler())
 		protected.POST("conversation/delete", handlers.PartitionDeleteHandler())
+
 		protected.GET("impersonate/:id", handlers.ImpersonateIndexPageHandler())
 
 	}

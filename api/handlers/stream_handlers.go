@@ -2,11 +2,13 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/sashabaranov/go-openai"
 	"gochat/internal/ai"
 	"gochat/internal/rag"
 	"gochat/internal/services"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -15,8 +17,8 @@ import (
 // ChatStreamHandler handles SSE connections for streaming chat responses
 func ChatStreamHandler(manager *services.ClientManager) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		conversationID := c.Query("conversation_id")
-		if conversationID == "" {
+		threadID := c.Query("thread_id")
+		if threadID == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Missing conversation_id parameter"})
 			return
 		}
@@ -35,11 +37,10 @@ func ChatStreamHandler(manager *services.ClientManager) gin.HandlerFunc {
 		c.Writer.Flush()
 
 		// Get or create client channel
-		clientChan := manager.RegisterClient(conversationID)
+		clientChan := manager.RegisterClient(threadID)
 
-		// Send initial message with the same format
-		//initialEvent := fmt.Sprintf("event: message\ndata: Connected to event stream\n\n")
-		//c.Writer.Write([]byte(initialEvent))
+		// Send initial message with the same format// Initial dummy event (this ensures a clean "connected" response)
+		c.Writer.Write([]byte("data: {\"content\":\"torgonestjolie\",\"isDone\":false}\n\n"))
 		c.Writer.Flush()
 
 		// Create a closed channel to detect client disconnect
@@ -58,44 +59,212 @@ func ChatStreamHandler(manager *services.ClientManager) gin.HandlerFunc {
 				_, err := c.Writer.Write([]byte(msg))
 				if err != nil {
 					fmt.Printf("Error writing to client: %v\n", err)
-					manager.UnregisterClient(conversationID)
+					manager.UnregisterClient(threadID)
 					return
 				}
 				c.Writer.Flush()
 
 			case <-clientGone:
 				// Client disconnected
-				manager.UnregisterClient(conversationID)
+				manager.UnregisterClient(threadID)
 				return
 			}
 		}
 	}
 }
 
+type ChatRequest struct {
+	ThreadID string               `json:"threadId"`
+	Messages []ai.IncomingMessage `json:"messages"`
+}
+
+type Message struct {
+		ID          string `json:"id"`
+		Role        string `json:"role"`
+		Content     string `json:"content"`
+		ThreadID    string `json:"threadId"`
+		CreatedAt   string `json:"createdAt"`
+		Status      string `json:"status"`
+		Attachments []struct {
+			ID    string `json:"id"`
+			Type  string `json:"type"`
+			Name  string `json:"name"`
+		} `json:"attachments"`
+}
+
+type MessageHandlerRequestData struct {
+	Messages  []Message `json:"messages"`
+	ThreadID string `json:"threadId"`
+}
+
+func processMessages(messages []Message, c *gin.Context) ([]ai.IncomingMessage, error) {
+	var processedMessages []ai.IncomingMessage
+
+	for _, msgData := range messages {
+		// Create the message structure
+		message := ai.IncomingMessage{
+		Role:        msgData.Role,
+		Content:     msgData.Content,
+		ID:          msgData.ID,
+		Attachments: make([]ai.Attachment, 0, len(msgData.Attachments)),
+	}
+
+		// Process each attachment for this message
+		for _, attInfo := range msgData.Attachments {
+		// Construct the attachment key
+		attachmentKey := fmt.Sprintf("attachment_%s_%s", msgData.ID, attInfo.ID)
+
+		// Get the file from form data
+		file, header, err := c.Request.FormFile(attachmentKey)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": fmt.Sprintf("Failed to get attachment: %s", attachmentKey),
+			})
+			return nil, err
+		}
+
+		defer file.Close()
+
+		// Read into byte array
+		fileBytes, err := io.ReadAll(file)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": fmt.Sprintf("Failed to read attachment: %s", attachmentKey),
+			})
+			return nil, err
+		}
+
+		// Add to message
+		message.Attachments = append(message.Attachments, ai.Attachment{
+		ID:     attInfo.ID,
+		Type:   attInfo.Type,
+		Name:   header.Filename,
+		Binary: fileBytes,
+	})
+	}
+
+		processedMessages = append(processedMessages, message)
+	}
+	return processedMessages, nil
+
+}
+
 // MessageHandler handles incoming chat messages and triggers response streaming
 func MessageHandler(manager *services.ClientManager) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var data struct {
-			ConversationID string                         `json:"conversationId"`
-			Messages       []openai.ChatCompletionMessage `json:"messages"`
-			HasFiles       bool                           `json:"hasFiles"`
+
+		// Parse the multipart form (32MB limit or adjust as needed)
+		if err := c.Request.ParseMultipartForm(32 << 20); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse form data"})
+			return
 		}
 
+		// Get the messages data
+		messagesDataStr := c.Request.FormValue("messagesData")
+		if messagesDataStr == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Missing messages data"})
+			return
+		}
+
+		// Parse the messagesData JSON
+		var requestData MessageHandlerRequestData
+
+		if err := json.Unmarshal([]byte(messagesDataStr), &requestData); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid messages data format"})
+			return
+		}
+
+		// Process each message and its attachments
+		processedMessages, err := processMessages(requestData.Messages, c)
+
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process messages"})
+			return
+		}
+
+		var openAIMessages []openai.ChatCompletionMessage
+
+		for _, m := range processedMessages {
+			openAIMessages = append(openAIMessages, m.ToOpenAIMessage())
+		}
+
+		useRag := false
+		for _, message := range processedMessages {
+			if len(message.Attachments) > 0 {
+				for _, attachment := range message.Attachments {
+					if attachment.Type != "image" {
+						// Check MIME type for PDF and TXT files
+						mimeType := attachment.Type
+						if mimeType == "application/pdf" ||
+							mimeType == "text/plain" {
+							useRag = true
+							break
+						}
+					}
+				}
+				if useRag {
+					break
+				}
+			}
+		}
+
+
+		if useRag {
+			go rag.GetRaggedAnswerStream(c, openAIMessages, requestData.ThreadID, manager)
+		} else {
+			go ai.GetCompletionStream(c, requestData.ThreadID, openAIMessages, manager)
+		}
+
+		// Start async goroutine to stream LLM response
+		//go services.StreamLLMResponse(data.ConversationID, manager)
+
+		// Return success immediately - actual response will stream via SSE
+		c.JSON(http.StatusAccepted, gin.H{"status": "Message received, response streaming"})
+}
+}
+func MessageHandlerOld(manager *services.ClientManager) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var data ChatRequest
 		if err := c.ShouldBindJSON(&data); err != nil {
+			fmt.Printf("Error binding json: %v\n", err)
 			c.JSON(400, gin.H{"error": "Invalid request body"})
 			return
 		}
-		if data.ConversationID == "" {
+		if data.ThreadID == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Missing conversation_id or message"})
 			return
 		}
 
-		fmt.Println("hasFiles: ", data.HasFiles)
+		useRag := false
+		for _, message := range data.Messages {
+			if len(message.Attachments) > 0 {
+				for _, attachment := range message.Attachments {
+					if attachment.Type != "image" {
+						// Check MIME type for PDF and TXT files
+						mimeType := attachment.Type
+						if mimeType == "application/pdf" ||
+							mimeType == "text/plain" {
+							useRag = true
+							break
+						}
+					}
+				}
+				if useRag {
+					break
+				}
+			}
+		}
 
-		if data.HasFiles {
-			go rag.GetRaggedAnswerStream(c, data.Messages, data.ConversationID, manager)
+		var openAIMessages []openai.ChatCompletionMessage
+
+		for _, m := range data.Messages {
+			openAIMessages = append(openAIMessages, m.ToOpenAIMessage())
+		}
+
+		if useRag {
+			go rag.GetRaggedAnswerStream(c, openAIMessages, data.ThreadID, manager)
 		} else {
-			go ai.GetCompletionStream(c, data.ConversationID, data.Messages, manager)
+			go ai.GetCompletionStream(c, data.ThreadID, openAIMessages, manager)
 		}
 
 		// Start async goroutine to stream LLM response

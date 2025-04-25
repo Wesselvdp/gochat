@@ -23,7 +23,7 @@ func Init() (*schema.Queries, *sql.DB, error) {
 
 	database, err := sql.Open("sqlite3", fmt.Sprintf("file:%s?_foreign_keys=on", dbPath))
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to open database: %w", err)
+		return nil, nil, fmt.Errorf("failed tos open database: %w", err)
 	}
 
 	// Verify connection with a ping

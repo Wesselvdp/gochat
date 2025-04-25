@@ -11,34 +11,40 @@ export class Stream {
   fullResponse: string = "";
   onChunk: (chunk: string, isDone: boolean) => void = () => {};
   onDone: (finalContent: string) => void = () => {};
-  currentConversationId: string | null = null;
+  currentThreadId: string | null = null;
+  private connectionState: "connected" | "disconnected" | "connecting" =
+    "disconnected";
 
   constructor(url: string) {
     this.url = url;
   }
 
-  init(conversationId?: string) {
+  async init(threadId?: string) {
     // Close any existing connection
     this.close();
+    console.log({ threadId });
+    this.connectionState = "connecting";
 
     // Append conversation ID to URL if provided
-    const connectionUrl = conversationId
-      ? `${this.url}?conversation_id=${encodeURIComponent(conversationId)}`
+    const connectionUrl = threadId
+      ? `${this.url}?thread_id=${encodeURIComponent(threadId)}`
       : this.url;
 
     console.log(`Creating new EventSource connection to ${connectionUrl}`);
 
     // Create new EventSource
     this.eventSource = new EventSource(connectionUrl);
-    this.currentConversationId = conversationId || null;
+    this.currentThreadId = threadId || null;
 
     // Set up event handlers
     this.eventSource.onopen = () => {
       console.log("EventSource connection opened successfully");
+      this.connectionState = "connected";
     };
 
-    this.eventSource.addEventListener("connected", (event) => {
-      console.log("Connected to stream:", event.data);
+    this.eventSource.addEventListener("open", (event) => {
+      console.log("Connected to stream:", event);
+      this.connectionState = "connected";
     });
 
     // Improved message event handler for SSE
@@ -85,11 +91,13 @@ export class Stream {
         const isDone = parsedData.isDone === true;
 
         // Call the callback with the new chunk and completion status
+        if (parsedData.content === "torgonestjolie") return; // we use this just to open the stream
         this.onChunk(parsedData.content || "", isDone);
 
         if (isDone) {
           console.log("Stream completed. Full response:", this.fullResponse);
           this.onDone(this.fullResponse);
+          // Note: We don't close the connection here - it should remain open for future messages
         }
       } catch (error) {
         console.error(
@@ -111,57 +119,25 @@ export class Stream {
 
     this.eventSource.onerror = (event) => {
       console.error("EventSource error:", event);
+      this.connectionState = "disconnected";
+
       // Implement a reconnection strategy
       setTimeout(() => {
         console.log("Attempting to reconnect...");
-        this.init(this.currentConversationId || undefined);
+        this.init(this.currentThreadId || undefined);
       }, 3000);
     };
   }
 
-  async sendMessage(
-    messages: ChatCompletionMessageParam[],
-    conversationId: string,
-    hasFiles: boolean,
-  ) {
-    // Reset full response
-    this.fullResponse = "";
-
-    try {
-      // Make sure the event source is established with the correct conversation ID
-      if (!this.eventSource || this.currentConversationId !== conversationId) {
-        this.init(conversationId);
-      }
-
-      // Send the message via POST
-      const response = await fetch(this.url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          messages,
-          conversationId,
-          hasFiles,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(
-          `Failed to send message: ${response.status} ${errorText}`,
-        );
-      }
-
-      return true;
-    } catch (error) {
-      console.error("Error sending message:", error);
-      return false;
-    }
-  }
-
   onMessage(callback: (content: string, isDone: boolean) => void) {
     this.onChunk = callback;
+  }
+
+  isConnected(): boolean {
+    console.log("Checking connection state:", {
+      readystate: this.eventSource?.readyState,
+    });
+    return this.connectionState === "connected" && this.eventSource !== null;
   }
 
   close() {
@@ -169,6 +145,8 @@ export class Stream {
       console.log("Closing EventSource connection");
       this.eventSource.close();
       this.eventSource = null;
+      this.connectionState = "disconnected";
+      this.fullResponse = ""; // Reset the response buffer
     }
   }
 }

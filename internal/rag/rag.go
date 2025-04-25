@@ -366,9 +366,19 @@ func determineRAGWithContext(userQuery string, documentContext string) (bool, er
 	return strings.Contains(response, "YES"), nil
 }
 
-// GetRaggedAnswer Returns a ragged answer if the LLM deems RAG is required, returns a normal answer if not.
+func extractTextFromMessage(msg openai.ChatCompletionMessage) string {
+	var textParts []string
+	for _, part := range msg.MultiContent {
+		if part.Type == openai.ChatMessagePartTypeText {
+			textParts = append(textParts, part.Text)
+		}
+	}
+	return strings.Join(textParts, "\n")
+}
+
 func GetRaggedAnswerStream(ctx context.Context, messages []openai.ChatCompletionMessage, conversationID string, manager *services.ClientManager) error {
-	query := messages[len(messages)-1].Content
+	lastMsg := messages[len(messages)-1]
+	query := extractTextFromMessage(lastMsg)
 	documentContext, err := GetDocumentsFromQuery(ctx, query, conversationID)
 	if err != nil {
 		fmt.Println("err", err.Error())

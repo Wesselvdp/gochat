@@ -2,52 +2,64 @@ import { LitElement, css, html, unsafeCSS } from "lit";
 
 import { customElement, property, state } from "lit/decorators.js";
 import globalStyles from "../styles.scss?inline";
-import {
-  createUserMessage,
-  createInStorage,
-  initConversation,
-} from "../conversation";
+
+import { DexieThreadRepository } from "../infrastructure/persistence/dexieThreadRepository";
+import { ChatService } from "../application/ChatService";
+import { Message } from "../domain";
 
 @customElement("user-input-form")
 export class userInputForm extends LitElement {
   static styles = [unsafeCSS(globalStyles), css``];
 
   @property({ type: String, reflect: true })
-  conversationId = "";
+  threadId = "";
 
-  @property({ type: Boolean })
-  isLocked = false;
+  private chatService: ChatService;
 
-  initConversation = async () => {
-    const id = await createInStorage();
-    this.conversationId = id;
-    return id;
-  };
+  @state()
+  message: Message | undefined = undefined;
 
-  handleMsg = async (msg: string) => {
-    // If there is no conversation initted
-    this.isLocked = true;
-    if (!(window as any).goChat.conversation) {
-      const id = this.conversationId || (await this.initConversation());
-      await createUserMessage(msg, id);
-      return (window.location.href = window.location.origin + `/c/${id}`);
+  constructor() {
+    super();
+    const threadRepository = new DexieThreadRepository();
+    this.chatService = new ChatService(threadRepository);
+  }
+
+  async connectedCallback() {
+    super.connectedCallback();
+    if (this.threadId) {
+      this.message = await this.chatService.getDraftMessage(this.threadId);
     }
-    // Existing conversation
-    await (window as any).goChat.conversation.handleUserInput(msg);
-    this.isLocked = false;
+  }
+
+  saveMessage(content: string) {
+    return this.chatService.handleUserSend({
+      threadId: this.threadId,
+      content,
+      role: "user",
+    });
+  }
+
+  getThreadId() {
+    return this.threadId || this.chatService.createThread();
+  }
+
+  handleMsg = async (content: string) => {
+    if (this.threadId) return this.saveMessage(content);
+    this.threadId = await this.chatService.createThread();
+
+    await this.saveMessage(content);
+    return (window.location.href =
+      window.location.origin + `/thread/${this.threadId}`);
   };
 
   render() {
     return html`
-      <div
-        class="${this.isLocked
-          ? "opacity-50"
-          : "opacity-100"} max-w-3xl mx-auto w-full"
-      >
+      <div class="max-w-3xl mx-auto w-full">
         <text-area .handleMessage="${this.handleMsg}"></text-area>
         <conversation-files
-          .initConversation=${this.initConversation}
-          .conversationId=${this.conversationId}
+          .getThreadId=${this.getThreadId()}
+          threadId=${this.threadId}
         ></conversation-files>
       </div>
     `;
