@@ -20,7 +20,7 @@ func init() {
 	envPath := filepath.Join(projectRoot, ".env")
 	// loads values from .env into the system
 	if err := godotenv.Load(envPath); err != nil {
-		log.Print("No .env file found")
+		log.Print("No .env file found", envPath)
 	}
 }
 
