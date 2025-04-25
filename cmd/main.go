@@ -10,17 +10,17 @@ import (
 )
 
 func init() {
-	//execPath, err := os.Executable()
-	//if err != nil {
-	//	log.Printf("Error getting executable path: %v", err)
-	//}
-	//
-	//projectRoot := filepath.Join(filepath.Dir(execPath), "..")
-	envPath := "../.env"
-	//// loads values from .env into the system
-	if err := godotenv.Load(envPath); err != nil {
-		log.Print("No .env file found", envPath)
+	// Try multiple common locations
+	envPaths := []string{".env", "../.env", "/app/.env"}
+
+	for _, path := range envPaths {
+		if err := godotenv.Load(path); err == nil {
+			log.Printf("Loaded env from %s", path)
+			return
+		}
 	}
+
+	log.Print("No .env file found in any of the expected locations")
 }
 
 func main() {
