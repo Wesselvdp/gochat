@@ -10,17 +10,13 @@ import (
 )
 
 func init() {
-	// Try multiple common locations
-	envPaths := []string{".env", "../.env", "/app/.env"}
+	cwd, _ := os.Getwd()
+	log.Printf("Current working directory: %s", cwd)
 
-	for _, path := range envPaths {
-		if err := godotenv.Load(path); err == nil {
-			log.Printf("Loaded env from %s", path)
-			return
-		}
+	envPath := "../.env"
+	if err := godotenv.Load(envPath); err != nil {
+		log.Printf("No .env file found at %s", envPath)
 	}
-
-	log.Print("No .env file found in any of the expected locations")
 }
 
 func main() {
