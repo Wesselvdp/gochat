@@ -50,6 +50,8 @@ COPY db/migrations /db/migrations
 
 COPY --from=builder /go/bin/migrate /usr/local/bin/migrate
 
+COPY .env /.env
+
 # Create directory for SQLite database
 RUN mkdir -p /data
 # Ensure the app has write permissions

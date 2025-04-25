@@ -10,12 +10,9 @@ import (
 )
 
 func init() {
-	cwd, _ := os.Getwd()
-	log.Printf("Current working directory: %s", cwd)
-
-	envPath := "../.env"
+	envPath := "/.env"  // This is now the absolute path in the container
 	if err := godotenv.Load(envPath); err != nil {
-		log.Printf("No .env file found at %s", envPath)
+		log.Print("No .env file found", envPath)
 	}
 }
 
