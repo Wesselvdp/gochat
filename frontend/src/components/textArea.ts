@@ -18,7 +18,7 @@ export class textArea extends LitElement {
             @keydown="${this.handleKeyDown}"
             @input="${this.autoResize}"
             name="message"
-            class="input shadow w-full bg-background-tertiary cursor-pointer border-none focus-within:outline-none"
+            class="input shadow w-full bg-level-4 cursor-pointer border-none focus-within:outline-none"
             id="growingTextarea"
             placeholder="Hoe kan AĿbert je helpen?"
           ></textarea>

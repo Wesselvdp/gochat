@@ -376,10 +376,10 @@ func extractTextFromMessage(msg openai.ChatCompletionMessage) string {
 	return strings.Join(textParts, "\n")
 }
 
-func GetRaggedAnswerStream(ctx context.Context, messages []openai.ChatCompletionMessage, conversationID string, manager *services.ClientManager) error {
-	lastMsg := messages[len(messages)-1]
+func GetRaggedAnswerStream(ctx context.Context, messages []openai.ChatCompletionMessage, threadID string, openaiRequest openai.ChatCompletionRequest, manager *services.ClientManager) error {
+	lastMsg := messages[len(messages)-2]
 	query := extractTextFromMessage(lastMsg)
-	documentContext, err := GetDocumentsFromQuery(ctx, query, conversationID)
+	documentContext, err := GetDocumentsFromQuery(ctx, query, threadID)
 	if err != nil {
 		fmt.Println("err", err.Error())
 	}
@@ -387,14 +387,15 @@ func GetRaggedAnswerStream(ctx context.Context, messages []openai.ChatCompletion
 	useRAG, err := determineRAGWithContext(query, documentContext)
 
 	if useRAG {
+		fmt.Println("USING RAG")
 		prompt := RagPrompt2(documentContext, query)
-		err = ai.SingleQueryStream(ctx, conversationID, prompt, manager)
+		err = ai.SingleQueryStream(ctx, threadID, prompt, openaiRequest, manager)
 		if err != nil {
 			fmt.Println("err", err.Error())
 			return err
 		}
 	} else {
-		err = ai.GetCompletionStream(ctx, conversationID, messages, manager)
+		err = ai.GetCompletionStream(ctx, threadID, messages, openaiRequest, manager)
 		if err != nil {
 			fmt.Println("err", err.Error())
 			return err

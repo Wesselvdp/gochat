@@ -14,7 +14,8 @@ templ Index(user *schema.GetUserRow) {
 				// Sidebar
 				@components.SideBar(user)
 				// Inner
-				<div id="inner" class="bg-background-tertiary mt-4 border-l-[0.1px] border-t-[0.1px] border-slate-100/30 rounded-tl-lg h-screen max-h-[100dvh] md:max-w-[calc(100%-260px)] w-full max-w-full flex flex-col pt-2">
+
+				<div id="inner" class="bg-level-3 mt-4 border-l-[0.1px] border-t-[0.1px] border-accent rounded-tl-lg h-screen max-h-[100dvh] md:max-w-[calc(100%-260px)] w-full max-w-full flex flex-col pt-2">
 					@components.NewChat(user.Name.String)
 				</div>
 			</div>

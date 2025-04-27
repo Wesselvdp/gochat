@@ -1,5 +1,10 @@
 import { Attachment } from "../../domain";
 
+export interface ModelParams {
+  temperature?: number;
+  top_p?: number;
+}
+
 export interface DbMessage {
   id: string;
   content: string;
@@ -8,6 +13,7 @@ export interface DbMessage {
   threadId: string;
   createdAt: Date;
   attachments?: Attachment[];
+  modelParams?: ModelParams;
 }
 
 export interface DbThread {

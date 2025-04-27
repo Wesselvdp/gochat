@@ -1,32 +1,103 @@
-:root {
-    --text-color: rgb(33, 37, 41);
+// @media (prefers-color-scheme: light) {
+//   :root {
+//     /* Base colors */
+//     --background: #ffffff;
+//     --foreground: rgb(33, 37, 41);
+//
+//     /* Background levels for depth */
+//     --background-level-1: #ffffff; /* Base/deepest level */
+//     --background-level-2: #f8f9fa; /* One level up */
+//     --background-level-3: #f1f3f5; /* Two levels up */
+//     --background-level-4: #dadcde; /* Top level */
+//
+//     /* Card component */
+//     --card: var(--background-level-2);
+//     --card-foreground: rgb(33, 37, 41);
+//
+//     /* Popover component */
+//     --popover: var(--background-level-1);
+//     --popover-foreground: rgb(33, 37, 41);
+//
+//     /* Primary colors */
+//     --primary: #e6007e;
+//     --primary-foreground: #ffffff;
+//
+//     /* Secondary colors */
+//     --secondary: #ff8200;
+//     --secondary-foreground: #ffffff;
+//
+//     /* Muted colors */
+//     --muted: var(--background-level-3);
+//     --muted-foreground: #6c757d;
+//
+//     /* Accent colors */
+//     --accent: var(--background-level-2);
+//     --accent-foreground: rgb(33, 37, 41);
+//
+//     /* Destructive colors */
+//     --destructive: #dc3545;
+//     --destructive-foreground: #ffffff;
+//
+//     /* Border colors */
+//     --border: var(--background-level-4);
+//     --input: var(--background-level-4);
+//
+//     /* Ring */
+//     --ring: #e6007e;
+//
+//     /* Radius */
+//   }
+// }
 
-    --primary-brand-color: #E6007E;
-    --secondary-brand-color: #FF8200;
 
 
-    --primary-background-color: #ffffff;
-    --secondary-background-color: #f8f9fa;
-    --tertiary-background-color: #f1f3f5;
-    --4-background-color: #dadcde;
+/* Media Query for System Preference */
+// @media (prefers-color-scheme: dark) {
+  :root {
+    --border-radius: 0.5rem;
+    /* Base colors */
+    --background: #1c1f29;
+    --foreground: #dbd3d3;
 
-    --chat-bubble: var(--tertiary-background-color);
-    --heading-color: var(--primary-brand-color);
-}
-@media (prefers-color-scheme: dark) {
-    :root {
-        --text-color: #ffffff ;
-        --text-color-light: cccccc ;
+    /* Background levels for depth */
+    --background-level-1: #1c1f29; /* Base/deepest level */
+    --background-level-2: #262932; /* One level up */
+    --background-level-3: #32353d; /* Two levels up */
+    --background-level-4: #40434a; /* Top level */
 
-        --primary-brand-color: rgb(230, 215, 225);
-        --secondary-brand-color: #807a86;
+    /* Card component */
+    --card: var(--background-level-2);
+    --card-foreground: #ffffff;
 
-        --primary-background-color: #1c1f29;
-        --secondary-background-color: #262932;
-        --tertiary-background-color: #32353d;
-        --4-background-color: #40434a;
+    /* Popover component */
+    --popover: var(--background-level-1);
+    --popover-foreground: #ffffff;
 
-        --chat-bubble: var(--tertiary-background-color);
-        --heading-color: var(--primary-brand-color);
-    }
-}
+    /* Primary colors */
+    --primary: rgb(230, 215, 225);
+    --primary-foreground: #1c1f29;
+
+    /* Secondary colors */
+    --secondary: #807a86;
+    --secondary-foreground: #ffffff;
+
+    /* Muted colors */
+    --muted: var(--background-level-3);
+    --muted-foreground: #cccccc;
+
+    /* Accent colors */
+    --accent: var(--background-level-3);
+    --accent-foreground: #ffffff;
+
+    /* Destructive colors */
+    --destructive: #dc3545;
+    --destructive-foreground: #ffffff;
+
+    /* Border colors */
+    --border: var(--background-level-4);
+    --input: var(--background-level-4);
+
+    /* Ring */
+    --ring: rgb(230, 215, 225);
+  }
+// }

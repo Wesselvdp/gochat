@@ -21,6 +21,11 @@ export type Attachment = {
   type: string;
 };
 
+export type ModelParams = {
+  temperature?: number;
+  top_p?: number;
+};
+
 export class Message {
   id: string;
   role: MessageRole;
@@ -28,7 +33,8 @@ export class Message {
   threadId: string;
   createdAt: Date;
   status: MessageStatus;
-  attachments?: Attachment[];
+  attachments: Attachment[];
+  modelParams: ModelParams;
 
   constructor(data: {
     id: string;
@@ -37,6 +43,7 @@ export class Message {
     createdAt: Date;
     threadId: string;
     status: MessageStatus;
+    modelParams?: ModelParams;
     attachments?: Attachment[];
   }) {
     this.id = data.id;
@@ -44,8 +51,9 @@ export class Message {
     this.content = data.content;
     this.createdAt = data.createdAt;
     this.threadId = data.threadId;
-    this.attachments = data.attachments;
+    this.attachments = data.attachments || [];
     this.status = data.status;
+    this.modelParams = data.modelParams || {};
   }
 
   edit(newContent: string) {

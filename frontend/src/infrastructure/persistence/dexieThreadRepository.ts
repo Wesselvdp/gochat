@@ -3,8 +3,13 @@ import { DbMessage, DbThread } from "./db-models";
 import { db } from "./db-setup";
 import { liveQuery } from "dexie";
 
-const sortByCreatedAt = (a: DbMessage, b: DbMessage) =>
-  a.createdAt < b.createdAt ? -1 : 1;
+const sortByCreatedAt = (a: Message, b: Message) => {
+  if (a.createdAt === b.createdAt) {
+    // If dates are equal, prioritize user messages before assistant messages
+    return a.role === "user" ? -1 : b.role === "user" ? 1 : 0;
+  }
+  return a.createdAt < b.createdAt ? -1 : 1;
+};
 
 export class DexieThreadRepository implements ThreadRepository {
   async getMessagesByThreadId(threadId: string): Promise<Message[]> {
@@ -107,6 +112,7 @@ export class DexieThreadRepository implements ThreadRepository {
       threadId: dbMsg.threadId,
       createdAt: dbMsg.createdAt,
       status: dbMsg.status,
+      modelParams: dbMsg.modelParams,
       attachments: dbMsg.attachments,
     });
   }

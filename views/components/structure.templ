@@ -26,9 +26,10 @@ templ Header(user *schema.GetUserRow) {
 	<head>
 <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
 		<link rel="stylesheet" href="/static/style.css"/>
+		<link rel="stylesheet" href="/static/frontend.css"/>
 		<link rel="stylesheet" href={ "/static/themes/default.css" }/>
 		<!-- Account-Specific Stylesheet -->
-		@templ.Raw(getAccountTheme(user))
+
 		<script src="/static/bundle.js" defer></script>
 		<meta charset="UTF-8"/>
 		<link rel="icon" type="image/x-icon" href="/static/favicon.ico"/>
@@ -36,11 +37,16 @@ templ Header(user *schema.GetUserRow) {
 		@templ.Raw(getAccountTitle(user))
 	</head>
 }
-
+ // from-[#161A29] to-[#1C1F29]
 templ Body() {
-	<body class="bg-gradient-to-b from-[#161A29] to-[#1C1F29]">
+	<body class="bg-level-1 text-foreground">
 		<main class="">
-			{ children... }
+            <chat-provider>
+<dialog-provider>
+                    { children... }
+</dialog-provider>
+
+            </chat-provider>
 		</main>
 	</body>
 }

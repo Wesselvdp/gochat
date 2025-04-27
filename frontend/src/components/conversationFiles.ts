@@ -7,7 +7,7 @@ import db from "../db";
 import api from "../api";
 import { DexieThreadRepository } from "../infrastructure/persistence/dexieThreadRepository";
 import { ChatService } from "../application/ChatService";
-import { Message } from "../domain";
+import { Message, ModelParams } from "../domain";
 import { generateUUID, toBase64 } from "../utils";
 
 type FileStatus = "loading" | "success" | "error";
@@ -66,6 +66,9 @@ export class SimpleGreeting extends LitElement {
     const threadRepository = new DexieThreadRepository();
     this.chatService = new ChatService(threadRepository);
   }
+
+  @property()
+  setModelParams: (modelParams: any) => void = () => {};
 
   // Function to fetch items (simulate fetching data)
   async fetchAttachments(): Promise<void> {
@@ -159,10 +162,30 @@ export class SimpleGreeting extends LitElement {
     }
   }
 
+  @property()
+  modelParams: ModelParams = {};
+
+  _openSettingsModal() {
+    let myEvent = new CustomEvent("opens-dialog", {
+      detail: {
+        dialog: "threadOptions",
+        template: html`<dialog-message-settings
+          .setModelParams=${this.setModelParams}
+          .threadId=${this.threadId}
+          .modelParams=${this.modelParams}
+        ></dialog-message-settings>`,
+      },
+      bubbles: true,
+      composed: true,
+    });
+
+    this.dispatchEvent(myEvent);
+  }
+
   // Render the UI as a function of component state
   render() {
     return html`
-      <div class="bg-background-4 rounded-b-lg px-4 mx-3 mt-[-3px] flex ">
+      <div class="bg-level-4 rounded-b-lg px-4 mx-3 mt-[-3px] flex ">
         <div class="flex-1 flex gap-4 py-2">
           ${this.attachments.map(
             (file, i) => html`
@@ -195,6 +218,9 @@ export class SimpleGreeting extends LitElement {
               <icon-paperclip />
             </label>
           </form>
+          <button @click="${() => this._openSettingsModal()}">
+            <div class="transition-all hover:rotate-90"><icon-settings /></div>
+          </button>
         </div>
       </div>
     `;

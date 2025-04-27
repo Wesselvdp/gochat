@@ -3,7 +3,6 @@ package ai
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"gochat/internal/services"
@@ -39,6 +38,7 @@ type IncomingMessage struct {
 	Content     string       `json:"content"` // for multimodal support
 	ID          string       `json:"id"`
 	Attachments []Attachment `json:"attachments"`
+	Temperature float32	`json:"temperature"`
 }
 
 func encodeToBase64(data []byte) string {
@@ -51,7 +51,8 @@ func (m IncomingMessage) ToOpenAIMessage() openai.ChatCompletionMessage {
 	}
 	// Handle different message types
 	message := openai.ChatCompletionMessage{
-		Role: m.Role,
+		Role:         m.Role,
+
 	}
 
 	// Create base text content
@@ -83,45 +84,26 @@ func (m IncomingMessage) ToOpenAIMessage() openai.ChatCompletionMessage {
 	return message
 }
 
-// 1. message comes in
-// 2. attachment handler
-// 3. AH: if pdf, rag flow --> leave out file from content
-// 4. AH: if image, image flow --> include file in content
-// 5.
-// Add this function to your package
-func prettyPrintMessages(messages []openai.ChatCompletionMessage) {
-	jsonData, err := json.MarshalIndent(messages, "", "    ")
-	if err != nil {
-		fmt.Printf("Error marshaling messages: %v\n", err)
-		return
-	}
-	fmt.Println(string(jsonData))
-}
 
 // GetCompletionStream handles streaming completions with empty message handling
-func GetCompletionStream(ctx context.Context, conversationID string, messages []openai.ChatCompletionMessage, manager *services.ClientManager) error {
+func GetCompletionStream(ctx context.Context, threadID string, messages []openai.ChatCompletionMessage, openaiRequest openai.ChatCompletionRequest, manager *services.ClientManager) error {
 	client, err := initClient()
 	if err != nil {
 		return fmt.Errorf("failed to initialize client: %w", err)
 	}
 	workingMessages := generateMessages(messages)
 
-	// Then replace your existing fmt.Println(workingMessages) with:
-	prettyPrintMessages(workingMessages)
 
-	// prettyPrintMessages(workingMessages)
+	openaiRequest.Messages = workingMessages
 
-	// Create stream request with the provided context
+	fmt.Println("Temperature", openaiRequest.Temperature)
+
 	stream, err := client.CreateChatCompletionStream(
 		ctx,
-		openai.ChatCompletionRequest{
-			Model:    "gemma3:27b-it-q8_0",
-			Messages: workingMessages,
-			Stream:   true,
-		},
+		openaiRequest,
 	)
 
-	fmt.Println("test", stream, err)
+
 	if err != nil {
 		fmt.Printf("error creating stream: %v\n", err)
 		return fmt.Errorf("failed to create chat completion stream: %w", err)
@@ -140,7 +122,7 @@ func GetCompletionStream(ctx context.Context, conversationID string, messages []
 				fmt.Println("stream closed", err)
 				// Send a completion message with finished flag
 				finishedMsg := `{"content":"","isDone":true}`
-				manager.SendRawEventToConversation(conversationID, "message", finishedMsg)
+				manager.SendRawEventToConversation(threadID, "message", finishedMsg)
 				// Stream finished naturally
 				return nil
 			}
@@ -157,7 +139,7 @@ func GetCompletionStream(ctx context.Context, conversationID string, messages []
 				//}
 				// Format as JSON with content and finished flag
 				jsonMsg := fmt.Sprintf(`{"content":%q,"isDone":false}`, content)
-				manager.SendRawEventToConversation(conversationID, "message", jsonMsg)
+				manager.SendRawEventToConversation(threadID, "message", jsonMsg)
 			}
 		}
 	}
@@ -262,13 +244,14 @@ func GetCompletion(messages []openai.ChatCompletionMessage) (string, error) {
 	content := resp.Choices[0].Message.Content
 	return content, nil
 }
-func SingleQueryStream(ctx context.Context, convsersationId string, query string, manager *services.ClientManager) error {
-	err := GetCompletionStream(ctx, convsersationId, []openai.ChatCompletionMessage{
+func SingleQueryStream(ctx context.Context, threadID string, query string, openaiRequest openai.ChatCompletionRequest, manager *services.ClientManager) error {
+	fmt.Println("Single Query Stream", query)
+	err := GetCompletionStream(ctx, threadID, []openai.ChatCompletionMessage{
 		{
 			Role:    "user",
 			Content: query,
 		},
-	}, manager)
+	}, openaiRequest, manager)
 	if err != nil {
 		fmt.Printf("Failed to get completion stream for singleQuery: %v\n", err)
 		return err
@@ -282,6 +265,8 @@ func SingleQuery(query string) (string, error) {
 			Content: query,
 		},
 	})
+	fmt.Println("Single Query", query)
+	fmt.Println("Single Query Response", completion)
 	if err != nil {
 		return "", err
 	}

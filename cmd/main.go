@@ -10,16 +10,15 @@ import (
 )
 
 func init() {
-	//execPath, err := os.Executable()
-	//if err != nil {
-	//	log.Printf("Error getting executable path: %v", err)
-	//}
 
-	//projectRoot := filepath.Join(filepath.Dir(execPath), "..")
-	//envPath := filepath.Join(projectRoot, ".env")
-	// loads values from .env into the system
-	if err := godotenv.Load(); err != nil {
-		log.Print("No .env file found")
+	envPath := "/.env"  // This is now the absolute path in the container
+
+	if err := godotenv.Load(envPath); err != nil {
+		log.Print("No .env file found", envPath)
+		if err := godotenv.Load(".env"); err != nil {
+			log.Print("No .env file found in second layer" +
+				"", "")
+		}
 	}
 }
 

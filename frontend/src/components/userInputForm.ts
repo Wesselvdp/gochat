@@ -5,7 +5,8 @@ import globalStyles from "../styles.scss?inline";
 
 import { DexieThreadRepository } from "../infrastructure/persistence/dexieThreadRepository";
 import { ChatService } from "../application/ChatService";
-import { Message } from "../domain";
+import { Message, ModelParams } from "../domain";
+import { request } from "axios";
 
 @customElement("user-input-form")
 export class userInputForm extends LitElement {
@@ -15,20 +16,28 @@ export class userInputForm extends LitElement {
   threadId = "";
 
   private chatService: ChatService;
-
-  @state()
-  message: Message | undefined = undefined;
-
   constructor() {
     super();
     const threadRepository = new DexieThreadRepository();
     this.chatService = new ChatService(threadRepository);
   }
+  @state()
+  message: Message | undefined = undefined;
+
+  @state()
+  modelParams: ModelParams | undefined = undefined;
 
   async connectedCallback() {
     super.connectedCallback();
     if (this.threadId) {
       this.message = await this.chatService.getDraftMessage(this.threadId);
+    }
+
+    // Fetch model params if they're undefined
+    if (this.modelParams === undefined) {
+      this.modelParams = (await this.chatService.getModelParams(
+        this.threadId,
+      )) || { temperature: 0.3, top_p: 0.8 };
     }
   }
 
@@ -37,6 +46,7 @@ export class userInputForm extends LitElement {
       threadId: this.threadId,
       content,
       role: "user",
+      modelParams: this.modelParams,
     });
   }
 
@@ -53,12 +63,19 @@ export class userInputForm extends LitElement {
       window.location.origin + `/thread/${this.threadId}`);
   };
 
+  setModelParams = (modelParams: ModelParams) => {
+    console.log("setttingngng!", modelParams);
+    this.modelParams = modelParams;
+    this.requestUpdate();
+  };
+
   render() {
     return html`
       <div class="max-w-3xl mx-auto w-full">
         <text-area .handleMessage="${this.handleMsg}"></text-area>
         <conversation-files
-          .getThreadId=${this.getThreadId()}
+          .setModelParams=${this.setModelParams}
+          .modelParams=${this.modelParams}
           threadId=${this.threadId}
         ></conversation-files>
       </div>

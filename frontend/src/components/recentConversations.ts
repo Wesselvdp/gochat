@@ -85,6 +85,7 @@ export class RecentConversations extends LitElement {
 
     return html`
       <div class="flex-grow overflow-y-auto">
+        <!--        Search box-->
         <div class="px-2">
           <label>
             <div
@@ -100,13 +101,14 @@ export class RecentConversations extends LitElement {
             </div>
           </label>
         </div>
-        ${today.length
-          ? html` <div class="mb-4">
-              ${this.heading("Vandaag")}
-              <div class="space-y-2">${today}</div>
-            </div>`
-          : null}
-        <div>
+
+        <div class="max-h-[82vh] overflow-scroll relative">
+          ${today.length
+            ? html` <div class="mb-4">
+                ${this.heading("Vandaag")}
+                <div class="space-y-2">${today}</div>
+              </div>`
+            : null}
           ${recent.length
             ? html`
                 <div class="mb-4">

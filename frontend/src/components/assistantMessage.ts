@@ -5,7 +5,7 @@ import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import { customElement, property, state } from "lit/decorators.js";
 import globalStyles from "../styles.scss?inline";
 import hljs from "highlight.js";
-import { repeat } from "lit/directives/repeat.js";
+
 const marked = new Marked(
   markedHighlight({
     emptyLangClass: "hljs",

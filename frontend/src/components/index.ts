@@ -6,3 +6,8 @@ import "./userMessage";
 import "./recentConversation";
 import "./recentConversations";
 import "./userThread";
+import "./dialogProvider";
+import "./dialog";
+import "./torgon-button";
+import "./dialogMessageSettings";
+import "./chatProvider";

@@ -3,6 +3,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/sashabaranov/go-openai"
 	"gochat/internal/ai"
@@ -78,6 +79,11 @@ type ChatRequest struct {
 	Messages []ai.IncomingMessage `json:"messages"`
 }
 
+type ModelParams struct {
+	Temperature float32 `json:"temperature"`
+	TopP        float32 `json:"top_p"`
+}
+
 type Message struct {
 		ID          string `json:"id"`
 		Role        string `json:"role"`
@@ -85,6 +91,7 @@ type Message struct {
 		ThreadID    string `json:"threadId"`
 		CreatedAt   string `json:"createdAt"`
 		Status      string `json:"status"`
+		ModelParams ModelParams `json:"modelParams"`
 		Attachments []struct {
 			ID    string `json:"id"`
 			Type  string `json:"type"`
@@ -149,6 +156,22 @@ func processMessages(messages []Message, c *gin.Context) ([]ai.IncomingMessage, 
 
 }
 
+func ChatCompletionRequestBuilder() openai.ChatCompletionRequest {
+	return openai.ChatCompletionRequest{
+		Model:    "gemma3:27b-it-q8_0",
+		Stream:   true,
+	}
+}
+
+func GetModelParamsFromMessages(messages []Message) (*float32, *float32, error) {
+	lastUserMessage := messages[len(messages)-2]
+	if(lastUserMessage.Role != "user") {
+		return nil, nil, errors.New("Last message is not from user")
+	}
+	return &lastUserMessage.ModelParams.Temperature, &lastUserMessage.ModelParams.TopP, nil
+
+}
+
 // MessageHandler handles incoming chat messages and triggers response streaming
 func MessageHandler(manager *services.ClientManager) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -188,6 +211,17 @@ func MessageHandler(manager *services.ClientManager) gin.HandlerFunc {
 			openAIMessages = append(openAIMessages, m.ToOpenAIMessage())
 		}
 
+		temperature, topP, err := GetModelParamsFromMessages(requestData.Messages)
+
+		openaiRequest := ChatCompletionRequestBuilder()
+		openaiRequest.Messages = openAIMessages
+		if temperature != nil {
+			openaiRequest.Temperature = *temperature
+		}
+		if topP != nil {
+			openaiRequest.TopP = *topP
+		}
+
 		useRag := false
 		for _, message := range processedMessages {
 			if len(message.Attachments) > 0 {
@@ -208,63 +242,11 @@ func MessageHandler(manager *services.ClientManager) gin.HandlerFunc {
 			}
 		}
 
-
+fmt.Println("useRag: ", useRag)
 		if useRag {
-			go rag.GetRaggedAnswerStream(c, openAIMessages, requestData.ThreadID, manager)
+			go rag.GetRaggedAnswerStream(c, openAIMessages, requestData.ThreadID, openaiRequest, manager)
 		} else {
-			go ai.GetCompletionStream(c, requestData.ThreadID, openAIMessages, manager)
-		}
-
-		// Start async goroutine to stream LLM response
-		//go services.StreamLLMResponse(data.ConversationID, manager)
-
-		// Return success immediately - actual response will stream via SSE
-		c.JSON(http.StatusAccepted, gin.H{"status": "Message received, response streaming"})
-}
-}
-func MessageHandlerOld(manager *services.ClientManager) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		var data ChatRequest
-		if err := c.ShouldBindJSON(&data); err != nil {
-			fmt.Printf("Error binding json: %v\n", err)
-			c.JSON(400, gin.H{"error": "Invalid request body"})
-			return
-		}
-		if data.ThreadID == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Missing conversation_id or message"})
-			return
-		}
-
-		useRag := false
-		for _, message := range data.Messages {
-			if len(message.Attachments) > 0 {
-				for _, attachment := range message.Attachments {
-					if attachment.Type != "image" {
-						// Check MIME type for PDF and TXT files
-						mimeType := attachment.Type
-						if mimeType == "application/pdf" ||
-							mimeType == "text/plain" {
-							useRag = true
-							break
-						}
-					}
-				}
-				if useRag {
-					break
-				}
-			}
-		}
-
-		var openAIMessages []openai.ChatCompletionMessage
-
-		for _, m := range data.Messages {
-			openAIMessages = append(openAIMessages, m.ToOpenAIMessage())
-		}
-
-		if useRag {
-			go rag.GetRaggedAnswerStream(c, openAIMessages, data.ThreadID, manager)
-		} else {
-			go ai.GetCompletionStream(c, data.ThreadID, openAIMessages, manager)
+			go ai.GetCompletionStream(c, requestData.ThreadID, openAIMessages, openaiRequest, manager)
 		}
 
 		// Start async goroutine to stream LLM response

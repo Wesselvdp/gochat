@@ -7,6 +7,7 @@ import {
   ThreadRepository,
   messageStatusMap,
   messageRoleMap,
+  ModelParams,
 } from "../domain";
 import { createMessage } from "../db";
 import api from "../api";
@@ -20,6 +21,16 @@ export class ChatService {
   constructor(repository: ThreadRepository, streamService?: any) {
     this.repository = repository;
     this.streamService = streamService;
+  }
+
+  async getModelParams(threadId: string): Promise<ModelParams | undefined> {
+    const messages = await this.repository.getMessagesByThreadId(threadId);
+    const userMessages = messages.filter((m) => m.role === messageRoleMap.USER);
+    if (userMessages.length) {
+      return userMessages[userMessages.length - 1].modelParams;
+    }
+
+    return undefined;
   }
 
   async createThread(title?: string): Promise<string> {
@@ -57,8 +68,6 @@ export class ChatService {
       console.error("Assistant message not found");
       return;
     }
-
-    console.log("handling:", params);
 
     if (params.finalContent) {
       lastAssistantMessage.status = messageStatusMap.DONE;
@@ -241,12 +250,13 @@ export class ChatService {
     threadId?: string;
     content: string;
     role: MessageRole;
+    modelParams?: ModelParams;
     attachments?: Attachment[];
   }) {
     const threadId = params.threadId || (await this.createThread());
     const thread = await this.repository.getThreadById(threadId);
     if (!thread) throw new Error("Thread not found");
-
+    console.log({ modelParams: params.modelParams });
     thread.updateLastMessageTime();
     this.repository.saveThread(thread);
 
@@ -265,12 +275,18 @@ export class ChatService {
       createdAt: new Date(),
     });
 
+    console.log({ messageNew: message });
+
     await this.repository.saveMessage(message);
     await this.createAssistantStreamMessageHolder(threadId);
 
     const messagesToSend =
       await this.repository.getMessagesByThreadId(threadId);
     console.log("Messages to send:", messagesToSend);
+    console.log(
+      "temperature:",
+      messages.map((m) => m.modelParams),
+    );
 
     // const success = await this.sendMessageToStream(messagesToSend, threadId);
     const success = await this.new_sendMessageToStream(
