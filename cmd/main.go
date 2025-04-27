@@ -3,22 +3,17 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/joho/godotenv"
 	"gochat/internal/run"
 	"log"
 	"os"
+
+	"github.com/joho/godotenv"
 )
 
 func init() {
-
-	envPath := "/.env"  // This is now the absolute path in the container
-
+	envPath := "/.env" // This is now the absolute path in the container
 	if err := godotenv.Load(envPath); err != nil {
 		log.Print("No .env file found", envPath)
-		if err := godotenv.Load(".env"); err != nil {
-			log.Print("No .env file found in second layer" +
-				"", "")
-		}
 	}
 }
 
