@@ -11,3 +11,4 @@ import "./dialog";
 import "./torgon-button";
 import "./dialogMessageSettings";
 import "./chatProvider";
+import "./torgon-input";

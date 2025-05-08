@@ -5,7 +5,7 @@ import { customElement, property, state } from "lit/decorators.js";
 import { TailwindElement } from "./albertElement";
 import { ChatService } from "../application/ChatService";
 import { DexieThreadRepository } from "../infrastructure/persistence/dexieThreadRepository";
-import { ModelParams } from "../domain";
+import { ModelParams, Thread } from "../domain";
 
 type ModelBehaviour = {
   id: string;
@@ -65,7 +65,7 @@ export class userInputForm extends TailwindElement {
 
     // const modelParams = await this.chatService.getModelParams(this.threadId);
     const modelParams = this.modelParams;
-    console.log("onCOnnected", modelParams);
+
     if (modelParams) {
       this.modelBehaviour =
         modelBehaviours.find(
@@ -76,6 +76,9 @@ export class userInputForm extends TailwindElement {
     }
 
     if (!modelParams) this.modelBehaviour = modelBehaviours[1];
+
+    const thread = await this.chatService.getThread(this.threadId);
+    this.thread = thread;
   }
 
   private chatService: ChatService;
@@ -96,6 +99,9 @@ export class userInputForm extends TailwindElement {
   @property()
   threadId: string = "";
 
+  @state()
+  thread: Thread | undefined = undefined;
+
   protected updated(_changedProperties: PropertyValues) {
     super.updated(_changedProperties);
     if (_changedProperties.has("modelBehaviour")) {
@@ -114,10 +120,20 @@ export class userInputForm extends TailwindElement {
             <div>Gespreksopties</div>
           </dialog-title>
 
-          <dialog-description> </dialog-description>
+          <dialog-description></dialog-description>
         </dialog-header>
 
         <div class=" ">
+          <div class="mb-8">
+            <torgon-input
+              label="Gespreksnaam"
+              @input-blur="${(e: any) => {
+                this.chatService.renameThread(this.threadId, e.detail.value);
+              }}"
+              .value="${this.thread?.title}"
+            ></torgon-input>
+          </div>
+
           <p class="font-semibold leading-none tracking-tight mb-2">
             Creativiteit
           </p>
@@ -148,7 +164,7 @@ export class userInputForm extends TailwindElement {
           </div>
         </div>
 
-        <dialog-footer> </dialog-footer>
+        <dialog-footer></dialog-footer>
       </dialog-content>
     `;
   }
