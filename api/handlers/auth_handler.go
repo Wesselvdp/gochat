@@ -38,8 +38,9 @@ func OAuthRedirectAzure(r *gin.Engine) gin.HandlerFunc {
 			Name:       &name,
 		}
 
-		userService := services.NewUserService()
-		dbUser, err := userService.GetOrCreate(c, user)
+			userService := services.NewUserService()
+			dbUser, err := userService.GetOrCreate(c, user)
+
 
 		if err != nil {
 			fmt.Println("Error creating user: " + err.Error())
@@ -64,6 +65,7 @@ func OAuthRedirectAzure(r *gin.Engine) gin.HandlerFunc {
 
 	}
 }
+
 
 //func OAuthRedirectGoogle(r *gin.Engine) gin.HandlerFunc {
 //	return func(c *gin.Context) {

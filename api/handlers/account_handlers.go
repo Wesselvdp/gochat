@@ -72,7 +72,6 @@ func (h *AccountHandlers) CreateAccount() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
 			})
-			return
 		}
 
 		var accountData schema.CreateAccountParams

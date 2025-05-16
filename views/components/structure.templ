@@ -2,27 +2,27 @@ package components
 
 import (
 	"fmt"
-	"gochat/internal/schema"
+    "gochat/internal/services"
 )
 
-func getAccountTheme(user *schema.GetUserRow) string {
+func getAccountTheme(user *services.UserDto) string {
 	if user == nil {
 		return ""
 	}
-	return fmt.Sprintf("<link rel=\"stylesheet\" href=\"/static/themes/%s.css\" />", user.AccountID.String)
+	return fmt.Sprintf("<link rel=\"stylesheet\" href=\"/static/themes/%s.css\" />", user.Account.ID)
 
 }
-func getAccountTitle(user *schema.GetUserRow) string {
+func getAccountTitle(user *services.UserDto) string {
 	var accountPart string
 	if user == nil {
 		accountPart = ""
 	} else {
-		accountPart = "| " + user.AccountName.String
+		accountPart = "| " + user.Account.Name
 	}
 	return fmt.Sprintf("<title>AĿbert %s</title>", accountPart)
 }
 
-templ Header(user *schema.GetUserRow) {
+templ Header(user *services.UserDto) {
 	<head>
 <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
 		<link rel="stylesheet" href="/static/style.css"/>
@@ -69,12 +69,12 @@ templ NewChat(userName string) {
 	</div>
 }
 
-templ Component(componentName string, user *schema.GetUserRow) {
+templ Component(componentName string, user *services.UserDto) {
 	if componentName == "avatar" {
 		@Avatar(user)
 	}
 	if componentName == "newchat" {
-		@NewChat(user.Name.String)
+		@NewChat(user.Name)
 	}
 }
 
@@ -105,12 +105,12 @@ css primaryClassName(id string) {
 	background-position: center;
 }
 
-templ Avatar(user *schema.GetUserRow) {
-	<div class={ primaryClassName(user.AccountID.String) }></div>
+templ Avatar(user *services.UserDto) {
+	<div class={ primaryClassName(user.Account.ID) }></div>
 }
 
 
-templ SideBar(user *schema.GetUserRow) {
+templ SideBar(user *services.UserDto) {
 	// Sidebar
 	<nav class="py-4 px-2 flex flex-col rounded-r-2xl w-[260px] h-screen min-h-full max-md:fixed">
         <!-- Mobile menu button - only visible on mobile -->

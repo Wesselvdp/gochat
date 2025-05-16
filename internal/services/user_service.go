@@ -42,13 +42,15 @@ func NewUserService() *UserService {
 	return &UserService{queries: queries}
 }
 
-func (us *UserService) getAccountFromEmail(ctx context.Context, email string) (*string, error) {
+func (us *UserService) getAccountFromEmail(ctx context.Context, email string) (*schema.GetAccountByDomainRow, error) {
 	domain, err := getDomain(email)
 
 	if err != nil {
 		return nil, err
 	}
-	accountID, err := us.queries.GetAccountByDomain(ctx, domain)
+	account, err := us.queries.GetAccountByDomain(ctx, domain)
+
+	fmt.Println("account", account)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -57,17 +59,19 @@ func (us *UserService) getAccountFromEmail(ctx context.Context, email string) (*
 		return nil, fmt.Errorf("failed to get account: %w", err)
 	}
 
-	return &accountID, nil
+	return &account, nil
 }
 
 func (us *UserService) Create(ctx context.Context, params UserParams) (*schema.User, error) {
-	accountID, err := us.getAccountFromEmail(ctx, params.Email)
+	account, err := us.getAccountFromEmail(ctx, params.Email)
 	if err != nil {
 		fmt.Println("error getting account from email: " + err.Error())
 		return nil, fmt.Errorf("error getting account by domain: %s", err.Error())
 	}
 
-	if accountID == nil {
+
+
+	if account == nil {
 		eventService := NewEventService("")
 		eventService.Create(UnknownAccount, map[string]interface{}{
 			"email":  params.Email,
@@ -79,7 +83,7 @@ func (us *UserService) Create(ctx context.Context, params UserParams) (*schema.U
 	user := schema.CreateUserParams{
 		ID:      uuid.New().String(),
 		Email:   params.Email,
-		Account: *accountID,
+		Account: account.ID,
 	}
 
 	if params.Name != nil {
@@ -98,16 +102,43 @@ func (us *UserService) Create(ctx context.Context, params UserParams) (*schema.U
 	return &newUser, nil
 }
 
-func (us *UserService) Get(ctx context.Context, id string) (*schema.GetUserRow, error) {
-	user, err := us.queries.GetUser(ctx, id)
+type AccountDto struct {
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+}
+type UserDto struct {
+	ID        string `json:"id"`
+	Email     string `json:"email"`
+	Name      string `json:"name"`
+	ExternalID string `json:"external_id"`
+	Account AccountDto
+}
 
+func (us *UserService) Get(ctx context.Context, id string) (*UserDto, error) {
+	user, err := us.queries.GetUser(ctx, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
-	return &user, nil
+	account, err := us.queries.GetAccount(ctx, user.Account)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get account: %w", err)
+
+	}
+
+	userResponse := UserDto{
+		ID:         user.ID,
+		Email:      user.Email,
+		Name:       user.Name.String,
+		ExternalID: user.Externalid.String,
+		Account:    AccountDto{
+			ID:   account.ID,
+			Name: account.Name,
+		},
+	}
+	return &userResponse, nil
 }
 
 //func (us *UserService) GetFromContext(ctx context.Context) (*schema.User, error) {
@@ -138,7 +169,7 @@ func (us *UserService) GetOrCreate(ctx context.Context, params UserParams) (*sch
 
 	userResponse, err := us.GetUserByEmail(ctx, params.Email)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get user by email: %w", err)
+		return nil, fmt.Errorf("failed to get user by email: iw", err)
 	}
 	if userResponse != nil {
 		return userResponse, nil

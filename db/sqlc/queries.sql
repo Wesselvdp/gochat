@@ -15,10 +15,16 @@ GROUP BY
 
 
 -- name: GetAccountByDomain :one
-SELECT a.id
-FROM account a
-         JOIN account_domain ad ON a.id = ad.account
-WHERE ad.domain = ?;
+SELECT
+    a.id,
+    a.name,
+    ad.domain
+FROM
+    account a
+        JOIN
+    account_domain ad ON a.id = ad.account
+WHERE
+    ad.domain = ?;
 
 -- name: DeleteAccountDomain :exec
 DELETE FROM account_domain
@@ -112,7 +118,10 @@ INSERT INTO file (
  )
 RETURNING *;
 
--- name: GetFile :one
+-- name: GetFile :many
 SELECT * FROM file
 WHERE id = ? LIMIT 1;
 
+-- name: GetAccountById :one
+SELECT * FROM account
+WHERE id = ? LIMIT 1;

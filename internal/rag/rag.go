@@ -3,6 +3,7 @@ package rag
 import (
 	"context"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"github.com/milvus-io/milvus-sdk-go/v2/client"
 	"github.com/milvus-io/milvus-sdk-go/v2/entity"
 	"github.com/sashabaranov/go-openai"
@@ -376,7 +377,7 @@ func extractTextFromMessage(msg openai.ChatCompletionMessage) string {
 	return strings.Join(textParts, "\n")
 }
 
-func GetRaggedAnswerStream(ctx context.Context, messages []openai.ChatCompletionMessage, threadID string, openaiRequest openai.ChatCompletionRequest, manager *services.ClientManager) error {
+func GetRaggedAnswerStream(ctx *gin.Context, messages []openai.ChatCompletionMessage, threadID string, openaiRequest openai.ChatCompletionRequest, manager *services.ClientManager) error {
 	lastMsg := messages[len(messages)-2]
 	query := extractTextFromMessage(lastMsg)
 	documentContext, err := GetDocumentsFromQuery(ctx, query, threadID)

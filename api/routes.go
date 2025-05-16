@@ -70,7 +70,7 @@ func AddRoutes(r *gin.Engine) {
 	r.GET("/logout", handlers.LogoutPageHandler())
 
 	protected := r.Group("")
-	protected.Use(auth.JWTMiddleware())
+	protected.Use(auth.JWTMiddleware(), auth.AccountMiddleware())
 	m := services.NewClientManager()
 	{
 		protected.GET("", handlers.IndexPageHandler())

@@ -1,11 +1,12 @@
 package views
 
 import (
-	"gochat/internal/schema"
 	"gochat/views/components"
+    "gochat/internal/services"
+
 )
 
-templ ThreadPage(threadId string, user *schema.GetUserRow, isHTMX bool) {
+templ ThreadPage(threadId string, user *services.UserDto, isHTMX bool) {
 	if isHTMX {
         @Thread(threadId)
 	} else {

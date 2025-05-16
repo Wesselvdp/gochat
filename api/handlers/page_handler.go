@@ -11,7 +11,7 @@ import (
 	"gochat/internal/ai"
 	"gochat/internal/auth"
 	"gochat/internal/rag"
-	"gochat/internal/schema"
+
 	"gochat/internal/services"
 	views "gochat/views"
 	"gochat/views/components"
@@ -52,7 +52,7 @@ func notify(str string) {
 
 }
 
-func getUserData(ctx *gin.Context) (*schema.GetUserRow, error) {
+func getUserData(ctx *gin.Context) (*services.UserDto, error) {
 	userID := ctx.GetString("user")
 	userService := services.NewUserService()
 	user, err := userService.Get(ctx, userID)
@@ -62,7 +62,7 @@ func getUserData(ctx *gin.Context) (*schema.GetUserRow, error) {
 	return user, nil
 }
 
-func impersonateAccount(ctx *gin.Context, impersonationID string) (*schema.GetUserRow, error) {
+func impersonateAccount(ctx *gin.Context, impersonationID string) (*services.UserDto, error) {
 	userID := ctx.GetString("user")
 	userService := services.NewUserService()
 	user, err := userService.Get(ctx, userID)
@@ -114,7 +114,7 @@ func impersonateAccount(ctx *gin.Context, impersonationID string) (*schema.GetUs
 		return nil, nil
 	}
 
-	user.AccountID.String = impersonationID
+	user.Account.ID = impersonationID
 
 	return user, nil
 }

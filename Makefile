@@ -1,9 +1,9 @@
 
 ## Load .env file if it exists
-#ifneq (,$(wildcard .env))
-#    include scripts/.env
-#    export
-#endif
+ifneq (,$(wildcard .env))
+    include scripts/.env
+    export
+endif
 
 #ENV ?= development  # Default to development
 PRODUCTION_URL = https://app.torgon.io

@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"gochat/internal/services"
 	"io"
 	"net/http"
@@ -86,24 +87,25 @@ func (m IncomingMessage) ToOpenAIMessage() openai.ChatCompletionMessage {
 
 
 // GetCompletionStream handles streaming completions with empty message handling
-func GetCompletionStream(ctx context.Context, threadID string, messages []openai.ChatCompletionMessage, openaiRequest openai.ChatCompletionRequest, manager *services.ClientManager) error {
+func GetCompletionStream(ctx *gin.Context, threadID string, messages []openai.ChatCompletionMessage, openaiRequest openai.ChatCompletionRequest, manager *services.ClientManager) error {
 	client, err := initClient()
 	if err != nil {
 		return fmt.Errorf("failed to initialize client: %w", err)
 	}
-	workingMessages := generateMessages(messages)
 
+	accountName, exists := ctx.Get("account_name")
 
+	if !exists {
+		fmt.Println("Account name not found in context")
+		return fmt.Errorf("account name not found in context")
+	}
+	workingMessages := generateMessages(messages, accountName.(string) )
 	openaiRequest.Messages = workingMessages
 
-	fmt.Println("Temperature", openaiRequest.Temperature)
-
 	stream, err := client.CreateChatCompletionStream(
-		ctx,
+		context.Background(),
 		openaiRequest,
 	)
-
-
 	if err != nil {
 		fmt.Printf("error creating stream: %v\n", err)
 		return fmt.Errorf("failed to create chat completion stream: %w", err)
@@ -145,14 +147,14 @@ func GetCompletionStream(ctx context.Context, threadID string, messages []openai
 	}
 }
 
-func generateMessages(messages []openai.ChatCompletionMessage) []openai.ChatCompletionMessage {
-	instructionPrompt := `Je treedt nu op als AĿbert, een vriendelijke onderzoeksassistent voor KWIZ in Groningen.
+func createInstructionPrompt(accountName string) string {
+	instructionPrompt := fmt.Sprintf(`Je treedt nu op als AĿbert, een vriendelijke onderzoeksassistent voor %s in Groningen.
 
 Je configuratie:
 {
     "naam": "AĿbert",
     "rol": "Onderzoeksassistent",
-    "organisatie": "KWIZ in Groningen",
+    "organisatie": "%s in Groningen",
     "taalstijl": "beknopt en conversationeel",
     "privacybeleid": "alle gesprekken blijven privé, worden niet extern opgeslagen"
 }
@@ -172,11 +174,16 @@ Instructies:
 2. Reageer in dezelfde taal als het bericht van de gebruiker
 3. Houd antwoorden behulpzaam maar beknopt
 4. Vermeld privacy als er wordt gevraagd naar je doel of gegevensverwerking
-5. Spreek NOOIT vanuit KWIZ, je bent een externe helper
+5. Spreek NOOIT vanuit %s, je bent een externe helper
 
 
-Reageer nu als AĿbert op het volgende bericht:`
+Reageer nu als AĿbert op het volgende bericht:`, accountName, accountName, accountName)
 
+	return instructionPrompt
+}
+
+func generateMessages(messages []openai.ChatCompletionMessage, accountName string) []openai.ChatCompletionMessage {
+	instructionPrompt := createInstructionPrompt(accountName)
 	// Inject instruction into the first user text message
 	userMessageFound := false
 	for i, msg := range messages {
@@ -244,8 +251,7 @@ func GetCompletion(messages []openai.ChatCompletionMessage) (string, error) {
 	content := resp.Choices[0].Message.Content
 	return content, nil
 }
-func SingleQueryStream(ctx context.Context, threadID string, query string, openaiRequest openai.ChatCompletionRequest, manager *services.ClientManager) error {
-	fmt.Println("Single Query Stream", query)
+func SingleQueryStream(ctx *gin.Context, threadID string, query string, openaiRequest openai.ChatCompletionRequest, manager *services.ClientManager) error {
 	err := GetCompletionStream(ctx, threadID, []openai.ChatCompletionMessage{
 		{
 			Role:    "user",
@@ -265,8 +271,6 @@ func SingleQuery(query string) (string, error) {
 			Content: query,
 		},
 	})
-	fmt.Println("Single Query", query)
-	fmt.Println("Single Query Response", completion)
 	if err != nil {
 		return "", err
 	}

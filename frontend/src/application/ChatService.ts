@@ -40,9 +40,7 @@ export class ChatService {
       createdAt: new Date(),
     });
 
-    // To test
-    const id = await this.repository.saveThread(thread);
-    console.log({ id });
+    await this.repository.saveThread(thread);
     return thread.id;
   }
 
@@ -83,6 +81,7 @@ export class ChatService {
   }
 
   async renameThread(id: string, newTitle: string): Promise<void> {
+    console.log(`Renaming thread with id ${id} to ${newTitle}`);
     const thread = await this.getThread(id);
     if (!thread) throw new Error("Thread not found");
     thread.rename(newTitle);
@@ -98,7 +97,31 @@ export class ChatService {
     return messages.flatMap((m) => m.attachments || []);
   }
 
-  async new_sendMessageToStream(messages: Message[], threadId: string) {
+  async generateThreadName(threadId: string, content: string) {
+    console.log("Generating thread name");
+    const prompt = `
+              I want you to summarize the message below into 1 short sentence so it can serve as the title of the conversation the message is opening.
+              Your response will be directly serving as the title, so please just respond with the title and nothing else. The content might be in another language than english, so please be careful with the language you use.
+              message:
+              ${content}
+          `;
+    const data = await this.getCompletion([{ role: "user", content: prompt }]);
+    console.log({ name: data.content });
+
+    await this.renameThread(threadId, data.content);
+  }
+
+  async getCompletion(messages: ChatCompletionMessageParam[]) {
+    const response = await fetch(`/send-message`, {
+      method: "POST",
+      body: JSON.stringify({ messages }),
+    });
+
+    console.log({ response });
+    return response.json();
+  }
+
+  async sendMessageToStream(messages: Message[], threadId: string) {
     console.log("sending message to stream");
 
     // Check if stream is connected first
@@ -191,61 +214,6 @@ export class ChatService {
     }
   }
 
-  async sendMessageToStream(messages: Message[], threadId: string) {
-    console.log("sending message to stream");
-
-    // Check if stream is connected first
-    const streamService = this.streamService || getStreamService();
-
-    if (streamService) {
-      // Check connection and reconnect if needed
-      streamService.reconnectIfNeeded();
-
-      // Only proceed if we have a valid connection
-      if (!streamService.isStreamConnected()) {
-        console.warn(
-          "Stream is not connected. Attempting to reconnect before sending.",
-        );
-        // Give a short time for reconnection
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        // Check again
-        if (!streamService.isStreamConnected()) {
-          console.error("Failed to reconnect stream. Cannot send message.");
-          return false;
-        }
-      }
-    }
-
-    try {
-      const response = await fetch(
-        `/chat-stream?thread_id=${encodeURIComponent(threadId)}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            messages,
-            threadId,
-          }),
-        },
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(
-          `Failed to send message: ${response.status} ${errorText}`,
-        );
-      }
-
-      return true;
-    } catch (error) {
-      console.error("Error sending message:", error);
-      return false;
-    }
-  }
-
   async handleUserSend(params: {
     threadId?: string;
     content: string;
@@ -253,10 +221,20 @@ export class ChatService {
     modelParams?: ModelParams;
     attachments?: Attachment[];
   }) {
+    // If no threadId is provided, create a new thread
+    // const isNewThread = !params.threadId;
     const threadId = params.threadId || (await this.createThread());
+
+    const name = this.generateThreadName(threadId, params.content);
+    console.log({ name });
+
+    // if(isNewThread) {
+    //   const name = await this.generateThreadName(threadId, params.content);
+    //   this.renameThread(threadId, name);
+    // }
     const thread = await this.repository.getThreadById(threadId);
     if (!thread) throw new Error("Thread not found");
-    console.log({ modelParams: params.modelParams });
+
     thread.updateLastMessageTime();
     this.repository.saveThread(thread);
 
@@ -275,8 +253,6 @@ export class ChatService {
       createdAt: new Date(),
     });
 
-    console.log({ messageNew: message });
-
     await this.repository.saveMessage(message);
     await this.createAssistantStreamMessageHolder(threadId);
 
@@ -289,10 +265,7 @@ export class ChatService {
     );
 
     // const success = await this.sendMessageToStream(messagesToSend, threadId);
-    const success = await this.new_sendMessageToStream(
-      messagesToSend,
-      threadId,
-    );
+    const success = await this.sendMessageToStream(messagesToSend, threadId);
     if (!success) {
       // Handle failure - update UI to show error
       const assistantMessages =

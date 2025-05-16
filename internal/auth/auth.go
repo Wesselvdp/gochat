@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"gochat/internal/models"
+	"gochat/internal/services"
 	"io"
 	"net/http"
 	"net/url"
@@ -63,6 +64,28 @@ func UnsetTokenCookie(c *gin.Context) {
 
 var jwtKey = []byte(os.Getenv("JWT_SECURITY_TOKEN"))
 
+// Add the account name to the context
+func AccountMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID, exists := c.Get("user")
+
+		if !exists {
+			c.Next()
+		}
+
+		userService := services.NewUserService()
+		userDto, err := userService.Get(c, userID.(string))
+
+		if err != nil {
+			c.Next()
+		}
+
+
+		c.Set("account_name", userDto.Account.Name)
+		c.Next()
+	}
+}
+
 func JWTMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
@@ -111,6 +134,7 @@ func JWTMiddleware() gin.HandlerFunc {
 
 		// Get the user ID from the token claims
 		claims := token.Claims.(jwt.MapClaims)
+
 
 		c.Set("user", claims["sub"])
 		c.Next()
