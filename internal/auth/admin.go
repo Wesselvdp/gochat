@@ -109,7 +109,8 @@ func LoadAdminAuthConfig() AdminAuthConfig {
 		AllowedIPs: []string{
 			"62.45.64.135",       // paasloo
 			"92.68.199.197",      // Breuer Intraval
-			"188.61.140.179",     // Torgo
+			"188.61.140.179",     // Torgon
+			"178.198.208.158",     // Torgon
 			"178.198.205.242/32", // localhost IPv4
 			"::1/128",            // localhost IPv6
 		},
