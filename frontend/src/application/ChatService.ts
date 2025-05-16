@@ -98,7 +98,6 @@ export class ChatService {
   }
 
   async generateThreadName(threadId: string, content: string) {
-    console.log("Generating thread name");
     const prompt = `
               I want you to summarize the message below into 1 short sentence so it can serve as the title of the conversation the message is opening.
               Your response will be directly serving as the title, so please just respond with the title and nothing else. The content might be in another language than english, so please be careful with the language you use.
@@ -222,16 +221,12 @@ export class ChatService {
     attachments?: Attachment[];
   }) {
     // If no threadId is provided, create a new thread
-    // const isNewThread = !params.threadId;
+    const isNewThread = !params.threadId;
     const threadId = params.threadId || (await this.createThread());
 
-    const name = this.generateThreadName(threadId, params.content);
-    console.log({ name });
-
-    // if(isNewThread) {
-    //   const name = await this.generateThreadName(threadId, params.content);
-    //   this.renameThread(threadId, name);
-    // }
+    if (isNewThread) {
+      this.generateThreadName(threadId, params.content);
+    }
     const thread = await this.repository.getThreadById(threadId);
     if (!thread) throw new Error("Thread not found");
 
