@@ -1,4 +1,4 @@
-import { LitElement, css, html, unsafeCSS } from "lit";
+import { LitElement, css, html, unsafeCSS, PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import globalStyles from "../styles.scss?inline";
 import { Message, MessageStatus, messageStatusMap } from "../domain";
@@ -70,9 +70,28 @@ export class UserThread extends LitElement {
     }
   };
 
+  protected update(changedProperties: PropertyValues) {
+    super.update(changedProperties);
+    if (changedProperties.has("messages")) {
+      this.verifyThread();
+    }
+  }
+
+  async verifyThread() {
+    const thread = await this.chatService.getThread(this.id);
+    if (!thread) {
+      console.error("Thread not found");
+      return;
+    }
+    const isNewThread = thread.title === "New Thread";
+    const content = this.messages[0]?.content || "";
+
+    if (!isNewThread || !content) return;
+    this.chatService.generateThreadName(this.id, content);
+  }
+
   async connectedCallback() {
     super.connectedCallback();
-
     // Initialize the stream service for this thread
     createStreamService(this.id, this.handleNewChunk);
     // Use a more controlled approach to subscribing to message updates

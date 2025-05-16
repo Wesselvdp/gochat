@@ -221,15 +221,10 @@ export class ChatService {
     attachments?: Attachment[];
   }) {
     // If no threadId is provided, create a new thread
-    const isNewThread = !params.threadId;
     const threadId = params.threadId || (await this.createThread());
 
-    if (isNewThread) {
-      this.generateThreadName(threadId, params.content);
-    }
     const thread = await this.repository.getThreadById(threadId);
     if (!thread) throw new Error("Thread not found");
-
     thread.updateLastMessageTime();
     this.repository.saveThread(thread);
 

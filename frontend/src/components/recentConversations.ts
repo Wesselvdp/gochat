@@ -50,7 +50,6 @@ export class RecentConversations extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
-    console.log("start");
     this.chatService.subscribeToThreads((threads) => {
       console.log({ threads });
       this.threads = threads.map(this.groupThread);
